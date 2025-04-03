@@ -15,6 +15,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"ulist.app/ult/internal/git"
+	"ulist.app/ult/internal/version"
 )
 
 // Command flag constants
@@ -35,7 +36,6 @@ const (
 
 var (
 	errInvalidBumpOption = errors.New("bump option must be one of: build, patch, minor, or major")
-	errVersionFormat     = errors.New("invalid version format, expected: \"version: 2020.100.01+01\"")
 	errVersionNotFound   = errors.New("version not found in pubspec.yaml")
 
 	logger = slog.Default().WithGroup("version_command")
@@ -160,7 +160,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 // assertIsReleaseBranch verifies that the current git branch matches the expected release branch
 // pattern for the given version.
-func assertIsReleaseBranch(version Version) error {
+func assertIsReleaseBranch(version version.Version) error {
 	releaseBranch := fmt.Sprintf("release/v%s", version.String())
 	logger.Info("Checking release branch", "expected", releaseBranch)
 
@@ -186,7 +186,7 @@ func assertIsReleaseBranch(version Version) error {
 // or major version components according to semantic versioning rules.
 // When bumping the build number, it can optionally fetch the latest build number
 // from the Play Store first.
-func bumpVersion(version *Version, cmd *cli.Command) error {
+func bumpVersion(version *version.Version, cmd *cli.Command) error {
 	bumpType := cmd.String(flagBump)
 	logger.Info("Bumping version", "type", bumpType, "from", version)
 
@@ -243,7 +243,7 @@ func bumpVersion(version *Version, cmd *cli.Command) error {
 // findVersionInPubspec searches through the lines of pubspec.yaml to find the version
 // line, parses it, and returns the Version struct along with the line index where it was found.
 // Returns an error if the version line is not found or if parsing fails.
-func findVersionInPubspec(lines []string) (*Version, int, error) {
+func findVersionInPubspec(lines []string) (*version.Version, int, error) {
 	logger.Info("Searching for version in pubspec.yaml")
 
 	for i, line := range lines {
@@ -253,66 +253,19 @@ func findVersionInPubspec(lines []string) (*Version, int, error) {
 		}
 
 		logger.Debug("Found version line", "line", trimmedLine, "index", i)
-		version, err := parseVersionLine(trimmedLine)
+		logger.Debug("Parsing version line", "line", trimmedLine)
+		version, err := version.Parse(trimmedLine)
 		if err != nil {
 			logger.Error("Failed to parse version line", "line", trimmedLine, "error", err)
 			return nil, -1, err
 		}
+		logger.Debug("Successfully parsed version", "version", version)
 
 		return version, i, nil
 	}
 
 	logger.Error("Version not found in pubspec.yaml")
 	return nil, -1, errVersionNotFound
-}
-
-// parseVersionLine parses a version line like "version: 10.20.03+04" into a Version struct.
-// It expects the version to be in the format "major.minor.patch+build" where all
-// components are integers. Returns an error if the format is invalid or any component
-// cannot be parsed as an integer.
-func parseVersionLine(line string) (*Version, error) {
-	logger.Debug("Parsing version line", "line", line)
-
-	re := regexp.MustCompile(`^version: (\d+)\.(\d+)\.(\d+)\+(\d+)$`)
-	matches := re.FindStringSubmatch(line)
-	if matches == nil || len(matches) != 5 {
-		logger.Error("Version line doesn't match expected format", "line", line)
-		return nil, fmt.Errorf("%w: got %q", errVersionFormat, line)
-	}
-
-	major, err := strconv.Atoi(matches[1])
-	if err != nil {
-		logger.Error("Invalid major version", "value", matches[1], "error", err)
-		return nil, fmt.Errorf("invalid major version: %w", err)
-	}
-
-	minor, err := strconv.Atoi(matches[2])
-	if err != nil {
-		logger.Error("Invalid minor version", "value", matches[2], "error", err)
-		return nil, fmt.Errorf("invalid minor version: %w", err)
-	}
-
-	patch, err := strconv.Atoi(matches[3])
-	if err != nil {
-		logger.Error("Invalid patch version", "value", matches[3], "error", err)
-		return nil, fmt.Errorf("invalid patch version: %w", err)
-	}
-
-	build, err := strconv.Atoi(matches[4])
-	if err != nil {
-		logger.Error("Invalid build number", "value", matches[4], "error", err)
-		return nil, fmt.Errorf("invalid build number: %w", err)
-	}
-
-	version := &Version{
-		Major: major,
-		Minor: minor,
-		Patch: patch,
-		Build: build,
-	}
-
-	logger.Debug("Successfully parsed version", "version", version)
-	return version, nil
 }
 
 // writeFile writes the provided lines back to the specified file path,
