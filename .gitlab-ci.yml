@@ -1,0 +1,48 @@
+default:
+  image: go:1.23-alpine
+
+variables:
+  GO111MODULE: "on"
+  CGO_ENABLED: "0"
+  BINARY_NAME: "ult"
+
+stages:
+  - build
+  - deploy
+
+build-job:
+  stage: build
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Downloading go packages"
+    - go mod download
+
+    - echo "Compiling ult for linux amd64"
+    - GOOS="linux"
+    - GOARCH="amd64"
+    - mkdir -p ${GOOS}-${GOARCH}
+    - go build -ldflags="-s -w" -o ${GOOS}-${GOARCH}/${BINARY_NAME} .
+    - tar -czvf ${GOOS}-${GOARCH}.tar.gz ${GOOS}-${GOARCH}
+
+    - echo "Compiling ult for macos amd64"
+    - GOOS="darwin"
+    - GOARCH="amd64"
+    - mkdir -p ${GOOS}-${GOARCH}
+    - go build -ldflags="-s -w" -o ${GOOS}-${GOARCH}/${BINARY_NAME} .
+    - tar -czvf ${GOOS}-${GOARCH}.tar.gz ${GOOS}-${GOARCH}
+
+    - echo "Compiling ult for macos arm64"
+    - GOOS="darwin"
+    - GOARCH="arm64"
+    - mkdir -p ${GOOS}-${GOARCH}
+    - go build -ldflags="-s -w" -o ${GOOS}-${GOARCH}/${BINARY_NAME} .
+    - tar -czvf ${GOOS}-${GOARCH}.tar.gz ${GOOS}-${GOARCH}
+  artifacts:
+    paths:
+      - ./linux-amd64.tar.gz
+      - ./darwin-amd64.tar.gz
+      - ./darwin-arm64.tar.gz
+    when: on_success
+    access: all
+    expire_in: 1 week
