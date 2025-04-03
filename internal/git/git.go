@@ -10,24 +10,37 @@ import (
 )
 
 var (
-	logger = slog.New(slog.Default().Handler().WithGroup("git"))
+	logger = slog.Default().WithGroup("git")
 )
 
 // execCommand is a helper function that executes an external command and returns its output.
 // It logs any errors that occur during execution.
 func execCommand(name string, args ...string) ([]byte, error) {
 	cmd := exec.Command(name, args...)
-	bytes, err := cmd.Output()
+
+	logger.Debug("Executing command", "cmd", name, "args", args)
+
+	output, err := cmd.Output()
 	if err != nil {
-		logger.Debug("Command execution failed",
-			"command", name,
+		var exitErr *exec.ExitError
+		stderr := ""
+		if execErr, ok := err.(*exec.ExitError); ok {
+			exitErr = execErr
+			stderr = string(execErr.Stderr)
+		}
+
+		logger.Error("Command execution failed",
+			"cmd", name,
 			"args", args,
-			"stdout", string(bytes),
-			"error", err)
-		return []byte{}, err
+			"stdout", string(output),
+			"stderr", stderr,
+			"error", err,
+			"exitCode", exitErr)
+		return nil, fmt.Errorf("git %s: %w", strings.Join(args, " "), err)
 	}
 
-	return bytes, nil
+	logger.Debug("Command executed successfully", "cmd", name, "args", args)
+	return output, nil
 }
 
 // CommitChanges stages all modified files and commits them with a standard message.
@@ -97,3 +110,4 @@ func GetCurrentBranch(branch string) (string, error) {
 	logger.Info("Current branch identified", "branch", currentBranch)
 	return currentBranch, nil
 }
+
