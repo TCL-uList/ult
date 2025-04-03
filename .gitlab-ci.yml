@@ -45,7 +45,7 @@ build-job:
     expire_in: never
 
 release-job:
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.gitlab.com/gitlab-org/release-cli:v0.23.0
   stage: release
   needs: ["build-job"]
   rules:
