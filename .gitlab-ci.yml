@@ -1,5 +1,5 @@
 default:
-  image: go:1.23-alpine
+  image: golang:1.23-alpine3.20
 
 variables:
   GO111MODULE: "on"
