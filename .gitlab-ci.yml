@@ -12,6 +12,8 @@ build-job:
   stage: build
   rules:
     - if: $CI_COMMIT_TAG
+  after_script:
+    - echo "BUILD_JOB_ID=$CI_JOB_ID" >> build-job.env
   script:
     - echo "Downloading go packages"
     - go mod download
@@ -30,15 +32,16 @@ build-job:
     - mkdir -p darwin-arm64
     - GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o darwin-arm64/${BINARY_NAME} .
     - tar -czvf darwin-arm64.tar.gz darwin-arm64
-
   artifacts:
+    reports:
+      dotenv: build-job.env
     paths:
       - ./linux-amd64.tar.gz
       - ./darwin-amd64.tar.gz
       - ./darwin-arm64.tar.gz
     when: on_success
     access: all
-    expire_in: 1 week
+    expire_in: never
 
 release-job:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
@@ -56,11 +59,12 @@ release-job:
     - build-job
   artifacts:
     paths:
-      - ./checksum.txt
+      - ./linux-amd64-checksum.txt
+      - ./darwin-amd64-checksum.txt
+      - ./darwin-arm64-checksum.txt
     when: on_success
     access: all
     expire_in: never
-
   release:
     name: "Release $CI_COMMIT_TAG"
     description: "Automated release for tag $CI_COMMIT_TAG"
@@ -68,22 +72,22 @@ release-job:
     assets:
       links:
         - name: "linux amd64 executable"
-          url: "${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}/downloads/linux-amd64.tar.gz"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/linux-amd64.tar.gz"
           link_type: "package"
         - name: "linux amd64 archive checksum"
-          url: "${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}/downloads/linux-amd64-checksum.txt"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/linux-amd64-checksum.txt"
           link_type: "other"
 
         - name: "darwin amd64 executable"
-          url: "${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}/downloads/darwin-amd64.tar.gz"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-amd64.tar.gz"
           link_type: "package"
         - name: "darwin amd64 archive checksum"
-          url: "${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}/downloads/darwin-amd64-checksum.txt"  
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-amd64-checksum.txt"  
           link_type: "other"
 
         - name: "darwin arm64 executable"
-          url: "${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}/downloads/darwin-arm64.tar.gz"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-arm64.tar.gz"
           link_type: "package"
         - name: "darwin arm64 archive checksum"
-          url: "${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}/downloads/darwin-arm64-checksum.txt"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-arm64-checksum.txt"
           link_type: "other"
