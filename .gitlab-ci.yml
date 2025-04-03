@@ -1,6 +1,3 @@
-default:
-  image: golang:1.23-alpine3.20
-
 variables:
   GO111MODULE: "on"
   CGO_ENABLED: "0"
@@ -8,9 +5,10 @@ variables:
 
 stages:
   - build
-  - deploy
+  - release
 
 build-job:
+  image: golang:1.23-alpine3.20
   stage: build
   rules:
     - if: $CI_COMMIT_TAG
@@ -41,3 +39,54 @@ build-job:
     when: on_success
     access: all
     expire_in: 1 week
+
+release-job:
+  stage: release
+  needs: ["build-job"]
+  rules:
+    - if: $CI_COMMIT_TAG
+  # before_script:
+  #   - curl --location --output /usr/local/bin/release-cli "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
+  #   - chmod +x /usr/local/bin/release-cli
+  script:
+    - ls
+    # - echo "Creating release for tag $CI_COMMIT_TAG"
+    - echo "Creating checksum files for executables"
+    - sha256sum linux-amd64.tar.gz > linux-amd64-checksum.txt
+    - sha256sum darwin-amd64.tar.gz > darwin-amd64-checksum.txt
+    - sha256sum darwin-arm64.tar.gz > darwin-arm64-checksum.txt
+  #   - release-cli create \
+  #       --name "Release $CI_COMMIT_TAG" \
+  #       --description "Automated release" \
+  #       --tag-name "$CI_COMMIT_TAG" \
+  #       --assets-file "{\"name\":\"ult\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/ult\",\"filepath\":\"/ult\"}" \
+  #       --assets-file "{\"name\":\"checksum\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/checksum.txt\",\"filepath\":\"/checksum.txt\"}"
+  dependencies:
+    - build-job
+  artifacts:
+    paths:
+      - ./checksum.txt
+    when: on_success
+    access: all
+    expire_in: never
+
+  release:
+    name: "Release $CI_COMMIT_TAG"
+    description: "Automated release for tag $CI_COMMIT_TAG"
+    tag_name: $CI_COMMIT_TAG
+    assets:
+      links:
+        - name: "linux amd64 executable"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/linux-amd64-ult.tar.gz"
+        - name: "linux amd64 archive checksum"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/linux-amd64-checksum.txt"
+
+        - name: "darwin amd64 executable"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/darwin-amd64-ult.tar.gz"
+        - name: "darwin amd64 archive checksum"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/darwin-amd64-checksum.txt"
+
+        - name: "darwin arm64 executable"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/darwin-arm64-ult.tar.gz"
+        - name: "darwin arm64 archive checksum"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/darwin-arm64-checksum.txt"
