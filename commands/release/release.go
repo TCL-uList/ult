@@ -1,6 +1,6 @@
 // Package version_command provides functionality for managing version numbers
 // in pubspec.yaml files, with options for committing and tagging changes.
-package version_command
+package release
 
 import (
 	"context"
@@ -43,7 +43,7 @@ var (
 
 // Cmd defines the version command for CLI
 var Cmd = cli.Command{
-	Name:   "version",
+	Name:   "release",
 	Usage:  "increment the app version number",
 	Action: run,
 	Flags: []cli.Flag{

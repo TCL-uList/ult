@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v3"
-	version_command "ulist.app/ult/cmd/version"
+	version_command "ulist.app/ult/commands/release"
 )
 
 func main() {
