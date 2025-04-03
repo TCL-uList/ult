@@ -13,6 +13,7 @@ build-job:
   rules:
     - if: $CI_COMMIT_TAG
   after_script:
+    # pass this stage job id to the next stage so it can use it
     - echo "BUILD_JOB_ID=$CI_JOB_ID" >> build-job.env
   script:
     - echo "Downloading go packages"
@@ -75,19 +76,19 @@ release-job:
           url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/linux-amd64.tar.gz"
           link_type: "package"
         - name: "linux amd64 archive checksum"
-          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/linux-amd64-checksum.txt"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/linux-amd64-checksum.txt"
           link_type: "other"
 
         - name: "darwin amd64 executable"
           url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-amd64.tar.gz"
           link_type: "package"
         - name: "darwin amd64 archive checksum"
-          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-amd64-checksum.txt"  
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/darwin-amd64-checksum.txt"  
           link_type: "other"
 
         - name: "darwin arm64 executable"
           url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-arm64.tar.gz"
           link_type: "package"
         - name: "darwin arm64 archive checksum"
-          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${BUILD_JOB_ID}/artifacts/darwin-arm64-checksum.txt"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${CI_JOB_ID}/artifacts/darwin-arm64-checksum.txt"
           link_type: "other"
