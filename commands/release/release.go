@@ -1,6 +1,6 @@
 // Package version_command provides functionality for managing version numbers
 // in pubspec.yaml files, with options for committing and tagging changes.
-package release
+package release_command
 
 import (
 	"context"

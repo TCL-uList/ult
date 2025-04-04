@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v3"
-	version_command "ulist.app/ult/commands/release"
+	"ulist.app/ult/commands/release"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 			"The official CLI for managing uList application versions and deployments.\n" +
 			"Automates version bumping, release tagging, and deployment workflows.",
 		Commands: []*cli.Command{
-			&version_command.Cmd,
+			&release_command.Cmd,
 		},
 	}
 
