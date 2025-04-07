@@ -2,43 +2,193 @@ package secrets_command
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/urfave/cli/v3"
+	"ulist.app/ult/internal/secrets"
 )
 
 // Command flag constants
 const (
-	flagBump        = "bump"
-	flagFetch       = "fetch"
-	flagNoCommitTag = "no-commit-tag"
-	flagNoPush      = "no-push"
+	flagId       = "id"
+	flagFileName = "name"
+	flagArchive  = "archive"
+	flagVerbose  = "verbose"
 )
 
-// Cmd defines the version command for CLI
+const (
+	secrestsProjectId = "68640226"
+	appProjectId      = "41950965"
+)
+
+const (
+	defaultSecretsFileName = ".secrets.tar.gz"
+)
+
+var (
+	isVerbose = false
+	lvl       = new(slog.LevelVar)
+	logger    = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: lvl,
+	})).WithGroup("secrets_command")
+)
+
 var Cmd = cli.Command{
 	Name:   "secrets",
 	Usage:  "increment the app version number",
-	Action: run,
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:  flagFetch,
-			Usage: "fetch latest build number from Play Store before incrementing",
+	Action: listSecureFilesCommand,
+	Commands: []*cli.Command{
+		{
+			Name:   "list",
+			Usage:  "list all secrets from given project",
+			Action: listSecureFilesCommand,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:    flagId,
+					Aliases: []string{"i"},
+					Usage:   "show only the id of files that were founded",
+				},
+				&cli.StringFlag{
+					Name:        flagFileName,
+					Usage:       "show only files with given name",
+					DefaultText: ".secrets.tar.gz",
+				},
+			},
 		},
-		&cli.StringFlag{
-			Name:  flagBump,
-			Usage: "increment the version in pubspec choosing one of: build, patch, minor or major",
+		{
+			Name:   "delete",
+			Usage:  "delete secrets from project repo",
+			Action: deleteSecureFileCommand,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:    flagId,
+					Aliases: []string{"i"},
+					Usage:   "show only the id of files that were founded",
+				},
+				&cli.StringFlag{
+					Name:        flagFileName,
+					Usage:       "show only files with given name",
+					DefaultText: ".secrets.tar.gz",
+				},
+			},
 		},
-		&cli.BoolFlag{
-			Name:  flagNoCommitTag,
-			Usage: "skip creating Git commits and tag for version changes. Use with --no-push for dry-run simulations",
-		},
-		&cli.BoolFlag{
-			Name:  flagNoPush,
-			Usage: "skip pushing changes to remote repository. Changes will remain local for verification",
+		{
+			Name:   "update",
+			Usage:  "update secrets from project repo",
+			Action: updateSecureFileCommand,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        flagArchive,
+					Aliases:     []string{"a"},
+					Usage:       "path to the 'tar.gz' secrets archive that will be uploaded",
+					HideDefault: true,
+				},
+			},
 		},
 	},
 }
 
-func run(ctx context.Context, cmd *cli.Command) error {
+func setLoggingVerbosity(verbose bool) {
+	if verbose {
+		lvl.Set(slog.LevelInfo)
+	} else {
+		lvl.Set(slog.LevelError)
+	}
+}
+
+func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
+	setLoggingVerbosity(cmd.Bool(flagVerbose))
+
+	targetName := cmd.String(flagFileName)
+	showOnlyId := cmd.Bool(flagId)
+	logger.Info("Fetching secure files", "with name", targetName, "show only id", showOnlyId)
+
+	files, _, err := secrets.FetchAll(appProjectId)
+	if err != nil {
+		return err
+	}
+
+	if showOnlyId {
+		foundFile, id := secrets.GetSecureFileId(files, targetName)
+		if !foundFile {
+			return fmt.Errorf("No secure file was found with given name: %s", targetName)
+		}
+		println(id)
+	}
+
+	return nil
+}
+
+func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
+	setLoggingVerbosity(cmd.Bool(flagVerbose))
+
+	targetName := cmd.String(flagFileName)
+	showOnlyId := cmd.Bool(flagId)
+	logger.Info("Fetching secure files", "with name", targetName, "show only id", showOnlyId)
+
+	files, appRepo, err := secrets.FetchAll(appProjectId)
+	if err != nil {
+		return err
+	}
+
+	foundFile, id := secrets.GetSecureFileId(files, targetName)
+	if !foundFile {
+		return fmt.Errorf("No secure file was found with given name: %s", targetName)
+	}
+
+	err = secrets.Delete(appRepo, id, targetName, appProjectId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
+	setLoggingVerbosity(cmd.Bool(flagVerbose))
+
+	archivePath := cmd.String(flagArchive)
+	if len(archivePath) == 0 {
+		return fmt.Errorf("archive path can not be empty, you must pass as argument '--archive=path' or '-a=path'")
+	}
+	if path.Base(archivePath) != defaultSecretsFileName {
+		return fmt.Errorf("the archive must be named '%s'", defaultSecretsFileName)
+	}
+
+	path, err := filepath.Abs(archivePath)
+	if err != nil {
+		return fmt.Errorf("Failed to get absolute path for %s: %v", archivePath, err)
+	}
+	logger.Info("Using absolute path for archive upload", "path", path)
+
+	files, appRepo, err := secrets.FetchAll(appProjectId)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Looking for secure file", "name", defaultSecretsFileName)
+	foundFile, id := secrets.GetSecureFileId(files, defaultSecretsFileName)
+	if !foundFile {
+		return fmt.Errorf("No secure file was found with given name: %s", path)
+	}
+	logger.Info("Found secure file", "id", id, "name", defaultSecretsFileName)
+
+	logger.Info("Deleting existing secure file", "id", id)
+	err = secrets.Delete(appRepo, id, path, appProjectId)
+	if err != nil {
+		return err
+	}
+	logger.Info("Successfully deleted secure file", "id", id)
+
+	logger.Info("Creating new secure file", "project_id", appProjectId)
+	err = secrets.Create(appRepo, path, appProjectId)
+	if err != nil {
+		return err
+	}
+	logger.Info("Successfully updated secure file")
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"ulist.app/ult/commands/release"
+	"ulist.app/ult/commands/secrets"
 )
 
 func main() {
@@ -17,6 +18,14 @@ func main() {
 			"Automates version bumping, release tagging, and deployment workflows.",
 		Commands: []*cli.Command{
 			&release_command.Cmd,
+			&secrets_command.Cmd,
+		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "verbose",
+				Aliases: []string{"v"},
+				Usage:   "show logging messages",
+			},
 		},
 	}
 
