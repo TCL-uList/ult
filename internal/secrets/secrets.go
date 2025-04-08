@@ -9,6 +9,22 @@ import (
 	"ulist.app/ult/internal/tokens"
 )
 
+func secureFileString(file *gitlab.SecureFile) string {
+	return fmt.Sprintf("id: %d, name: %s, created at: %s, expires at: %s, checksum: %s", file.ID, file.Name, file.CreatedAt, file.ExpiresAt, file.Checksum)
+}
+
+func PrintSecureFile(file *gitlab.SecureFile, onlyId bool, targetName string) {
+	if targetName != "" && targetName != file.Name {
+		return
+	}
+
+	if onlyId {
+		println(file.ID)
+	} else {
+		println(secureFileString(file))
+	}
+}
+
 func FetchAll(projectId string) ([]*gitlab.SecureFile, *gitlab.Client, error) {
 	appRepo, err := gitlab.NewClient(tokens.AppApi)
 	if err != nil {
@@ -70,9 +86,9 @@ func Create(client *gitlab.Client, path string, projectId string) error {
 	return nil
 }
 
-func GetSecureFileId(files []*gitlab.SecureFile, targetFileName string) (bool, int) {
+func GetSecureFile(files []*gitlab.SecureFile, targetFileName string) (bool, *gitlab.SecureFile) {
 	var foundFile = false
-	var id int
+	var secureFile *gitlab.SecureFile
 
 	for _, file := range files {
 		if file.Name != targetFileName {
@@ -80,12 +96,12 @@ func GetSecureFileId(files []*gitlab.SecureFile, targetFileName string) (bool, i
 		}
 
 		foundFile = true
-		id = file.ID
+		secureFile = file
 	}
 
 	if !foundFile {
-		return false, -1
+		return false, nil
 	}
 
-	return true, id
+	return true, secureFile
 }

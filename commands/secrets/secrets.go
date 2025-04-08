@@ -112,12 +112,8 @@ func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	if showOnlyId {
-		foundFile, id := secrets.GetSecureFileId(files, targetName)
-		if !foundFile {
-			return fmt.Errorf("No secure file was found with given name: %s", targetName)
-		}
-		println(id)
+	for _, file := range files {
+		secrets.PrintSecureFile(file, showOnlyId, targetName)
 	}
 
 	return nil
@@ -135,12 +131,12 @@ func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	foundFile, id := secrets.GetSecureFileId(files, targetName)
+	foundFile, file := secrets.GetSecureFile(files, targetName)
 	if !foundFile {
 		return fmt.Errorf("No secure file was found with given name: %s", targetName)
 	}
 
-	err = secrets.Delete(appRepo, id, targetName, appProjectId)
+	err = secrets.Delete(appRepo, file.ID, targetName, appProjectId)
 	if err != nil {
 		return err
 	}
@@ -171,18 +167,18 @@ func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	logger.Info("Looking for secure file", "name", defaultSecretsFileName)
-	foundFile, id := secrets.GetSecureFileId(files, defaultSecretsFileName)
+	foundFile, file := secrets.GetSecureFile(files, defaultSecretsFileName)
 	if !foundFile {
 		return fmt.Errorf("No secure file was found with given name: %s", path)
 	}
-	logger.Info("Found secure file", "id", id, "name", defaultSecretsFileName)
+	logger.Info("Found secure file", "id", file.ID, "name", defaultSecretsFileName)
 
-	logger.Info("Deleting existing secure file", "id", id)
-	err = secrets.Delete(appRepo, id, path, appProjectId)
+	logger.Info("Deleting existing secure file", "id", file.ID)
+	err = secrets.Delete(appRepo, file.ID, path, appProjectId)
 	if err != nil {
 		return err
 	}
-	logger.Info("Successfully deleted secure file", "id", id)
+	logger.Info("Successfully deleted secure file", "id", file.ID)
 
 	logger.Info("Creating new secure file", "project_id", appProjectId)
 	err = secrets.Create(appRepo, path, appProjectId)
