@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/urfave/cli/v3 v3.1.1
 	gitlab.com/gitlab-org/api/client-go v0.127.0
+	github.com/lib/pq v1.10.9
 )
 
 require (
