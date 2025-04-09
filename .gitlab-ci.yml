@@ -17,7 +17,6 @@ build-job:
   before_script:
     - mkdir -p .go
   cache:
-    policy: pull-push
     key:
       files:
         - go.mod
