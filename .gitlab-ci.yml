@@ -28,20 +28,21 @@ build-job:
   script:
     - echo "Downloading go packages"
     - go mod download
+    - LDFLAGS="-s -w -X main.version=$(git describe --tags --abbrev=0) -X main.commit=$(git rev-parse HEAD)"
 
     - echo "Compiling ult for linux amd64"
     - mkdir -p linux-amd64
-    - GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o linux-amd64/${BINARY_NAME} .
+    - GOOS=linux GOARCH=amd64 go build -ldflags="$LDFLAGS" -o linux-amd64/${BINARY_NAME} .
     - tar -czvf linux-amd64.tar.gz linux-amd64
 
     - echo "Compiling ult for macos amd64"
     - mkdir -p darwin-amd64
-    - GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o darwin-amd64/${BINARY_NAME} .
+    - GOOS=darwin GOARCH=amd64 go build -ldflags="$LDFLAGS" -o darwin-amd64/${BINARY_NAME} .
     - tar -czvf darwin-amd64.tar.gz darwin-amd64
 
     - echo "Compiling ult for macos arm64"
     - mkdir -p darwin-arm64
-    - GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o darwin-arm64/${BINARY_NAME} .
+    - GOOS=darwin GOARCH=arm64 go build -ldflags="$LDFLAGS" -o darwin-arm64/${BINARY_NAME} .
     - tar -czvf darwin-arm64.tar.gz darwin-arm64
   artifacts:
     reports:

@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	// version is set dynamically at build
-	version = "undefined"
+	// set dynamically at build by ldflags parameter
+	version string = "dev"
+	// set dynamically at build by ldflags parameter
+	commit string = "none"
 )
 
 func main() {
@@ -20,7 +22,7 @@ func main() {
 		Name:  "version",
 		Usage: "show version information for ult",
 		Action: func(ctx context.Context, c *cli.Command) error {
-			println(version)
+			println(version, commit)
 			return nil
 		},
 	}
