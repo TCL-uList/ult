@@ -10,7 +10,21 @@ import (
 	"ulist.app/ult/commands/secrets"
 )
 
+var (
+	// version is set dynamically at build
+	version = "undefined"
+)
+
 func main() {
+	versionCmd := cli.Command{
+		Name:  "version",
+		Usage: "show version information for ult",
+		Action: func(ctx context.Context, c *cli.Command) error {
+			println(version)
+			return nil
+		},
+	}
+
 	cmd := &cli.Command{
 		Name: "ult",
 		Usage: "uList Command Line Tools (ult)\n\n" +
@@ -19,6 +33,7 @@ func main() {
 		Commands: []*cli.Command{
 			&release_command.Cmd,
 			&secrets_command.Cmd,
+			&versionCmd,
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
