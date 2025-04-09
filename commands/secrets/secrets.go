@@ -2,6 +2,7 @@ package secrets_command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -100,14 +101,26 @@ func setLoggingVerbosity(verbose bool) {
 	}
 }
 
+func getToken(cmd *cli.Command) (string, error) {
+	token := cmd.String("token")
+	if len(token) == 0 {
+		return "", errors.New("No token found. You need to pass the token using: --token=yourtokenhere")
+	}
+	return token, nil
+}
+
 func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
 	setLoggingVerbosity(cmd.Bool(flagVerbose))
+	token, err := getToken(cmd)
+	if err != nil {
+		return err
+	}
 
 	targetName := cmd.String(flagFileName)
 	showOnlyId := cmd.Bool(flagId)
 	logger.Info("Fetching secure files", "with name", targetName, "show only id", showOnlyId)
 
-	files, _, err := secrets.FetchAll(appProjectId)
+	files, _, err := secrets.FetchAll(appProjectId, token)
 	if err != nil {
 		return err
 	}
@@ -121,12 +134,16 @@ func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
 
 func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 	setLoggingVerbosity(cmd.Bool(flagVerbose))
+	token, err := getToken(cmd)
+	if err != nil {
+		return err
+	}
 
 	targetName := cmd.String(flagFileName)
 	showOnlyId := cmd.Bool(flagId)
 	logger.Info("Fetching secure files", "with name", targetName, "show only id", showOnlyId)
 
-	files, appRepo, err := secrets.FetchAll(appProjectId)
+	files, appRepo, err := secrets.FetchAll(appProjectId, token)
 	if err != nil {
 		return err
 	}
@@ -146,6 +163,10 @@ func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 
 func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 	setLoggingVerbosity(cmd.Bool(flagVerbose))
+	token, err := getToken(cmd)
+	if err != nil {
+		return err
+	}
 
 	archivePath := cmd.String(flagArchive)
 	if len(archivePath) == 0 {
@@ -161,7 +182,7 @@ func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 	}
 	logger.Info("Using absolute path for archive upload", "path", path)
 
-	files, appRepo, err := secrets.FetchAll(appProjectId)
+	files, appRepo, err := secrets.FetchAll(appProjectId, token)
 	if err != nil {
 		return err
 	}

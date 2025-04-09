@@ -41,6 +41,10 @@ func main() {
 				Aliases: []string{"v"},
 				Usage:   "show logging messages",
 			},
+			&cli.StringFlag{
+				Name:  "token",
+				Usage: "token that will be used on http requests",
+			},
 		},
 	}
 

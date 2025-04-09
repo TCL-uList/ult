@@ -6,7 +6,6 @@ import (
 	"os"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	"ulist.app/ult/internal/tokens"
 )
 
 func secureFileString(file *gitlab.SecureFile) string {
@@ -25,8 +24,8 @@ func PrintSecureFile(file *gitlab.SecureFile, onlyId bool, targetName string) {
 	}
 }
 
-func FetchAll(projectId string) ([]*gitlab.SecureFile, *gitlab.Client, error) {
-	appRepo, err := gitlab.NewClient(tokens.AppApi)
+func FetchAll(projectId string, token string) ([]*gitlab.SecureFile, *gitlab.Client, error) {
+	appRepo, err := gitlab.NewClient(token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to create client: %v", err)
 	}
