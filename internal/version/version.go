@@ -1,9 +1,11 @@
 package version
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 // Version represents semantic versioning with build number
@@ -58,4 +60,49 @@ func Parse(line string) (*Version, error) {
 	}
 
 	return &version, nil
+}
+
+// Bump updates the provided Version struct based on the bump type specified
+// It supports bumping the build number, patch, minor, or major version components.
+func (v *Version) Bump(bumpType BumpType) {
+	switch bumpType {
+	case BumpTypeBuild:
+		v.Build++
+
+	case BumpTypePatch:
+		v.Build = 1
+		v.Patch++
+
+	case BumpTypeMinor:
+		v.Build = 1
+		v.Patch = 1
+		v.Minor++
+
+	case BumpTypeMajor:
+		v.Build = 1
+		v.Patch = 1
+		v.Minor = v.Minor - (v.Minor % 100) + 100
+		v.Major++
+	}
+}
+
+// FetchFromLines searches through the lines to find the version line.
+// Will parses it, and returns the Version struct along with the line index where it was found.
+// Returns an error if the version line is not found or if parsing fails.
+func FetchFromLines(lines []string) (*Version, int, error) {
+	for i, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmedLine, "version: ") {
+			continue
+		}
+
+		version, err := Parse(trimmedLine)
+		if err != nil {
+			return nil, -1, err
+		}
+
+		return version, i, nil
+	}
+
+	return nil, -1, errors.New("version not found in pubspec.yaml")
 }

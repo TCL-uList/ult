@@ -4,7 +4,6 @@ package bump
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -20,10 +19,9 @@ import (
 
 // Command flag constants
 const (
-	flagBump        = "bump"
-	flagFetch       = "play-store"
-	flagNoCommitTag = "no-commit-tag"
-	flagNoPush      = "no-push"
+	flagFetchForRelease = "release"
+	flagNoCommitTag     = "no-commit-tag"
+	flagNoPush          = "no-push"
 )
 
 // Bump option constants
@@ -35,20 +33,17 @@ const (
 )
 
 var (
-	errInvalidBumpOption = errors.New("bump option must be one of: build, patch, minor, or major")
-	errVersionNotFound   = errors.New("version not found in pubspec.yaml")
-
 	logger = slog.Default().WithGroup("bump_command")
 )
 
 // Cmd defines the version command for CLI
 var Cmd = cli.Command{
-	Name:   flagBump,
+	Name:   "bump",
 	Usage:  "increment the version in pubspec choosing one of: build, patch, minor or major",
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
-			Name:  flagFetch,
+			Name:  flagFetchForRelease,
 			Usage: "fetch latest build number from Play Store before incrementing",
 		},
 		&cli.BoolFlag{
@@ -68,12 +63,16 @@ var Cmd = cli.Command{
 func run(ctx context.Context, cmd *cli.Command) error {
 	const pubspecPath = "pubspec.yaml"
 
-	bumpType := cmd.String(flagBump)
 	logger.Debug("Starting version command",
-		"bump", bumpType,
-		"fetch", cmd.Bool(flagFetch),
+		"fetch", cmd.Bool(flagFetchForRelease),
 		"noCommitTag", cmd.Bool(flagNoCommitTag),
 		"noPush", cmd.Bool(flagNoPush))
+
+	bumpType, err := version.ParseBumpType(cmd.Args().First())
+	if err != nil {
+		logger.Error("Failed to parse bump type", "error", err)
+		return fmt.Errorf("parsing bump type: %w", err)
+	}
 
 	contents, err := os.ReadFile(pubspecPath)
 	if err != nil {
@@ -84,7 +83,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	lines := strings.Split(string(contents), "\n")
 	logger.Debug("Read pubspec.yaml", "lineCount", len(lines))
 
-	version, idx, err := findVersionInPubspec(lines)
+	version, idx, err := version.FetchFromLines(lines)
 	if err != nil {
 		logger.Error("Failed to parse version", "error", err)
 		return fmt.Errorf("parsing version: %w", err)
@@ -92,9 +91,20 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 	logger.Info("Found version in pubspec", "version", version, "at line idx", idx)
 
-	if err := bumpVersion(version, cmd); err != nil {
-		return err
+	var build int
+	if cmd.Bool(flagFetchForRelease) {
+		build, err = fetchLatestReleaseBuild()
+		if err != nil {
+			return err
+		}
+	} else {
+		build, err = fetchLatestDevelopmentBuild()
+		if err != nil {
+			return err
+		}
 	}
+	version.Build = build
+	version.Bump(bumpType)
 
 	// Update version in pubspec lines
 	lines[idx] = fmt.Sprintf("version: %s", version)
@@ -111,7 +121,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		logger.Info("Processing git operations", "commitAndTag", true)
 
 		// assert we are on a release branch if bumping for release version
-		if cmd.Bool(flagFetch) {
+		if cmd.Bool(flagFetchForRelease) {
 			logger.Info("Checking release branch", "version", version)
 			if err := assertIsReleaseBranch(*version); err != nil {
 				return err
@@ -129,7 +139,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		// add "latest" tag for release bumps
-		if cmd.Bool(flagFetch) {
+		if cmd.Bool(flagFetchForRelease) {
 			logger.Info("Creating 'latest' tag for release")
 			if err := git.CreateTag("latest"); err != nil {
 				return err
@@ -177,93 +187,6 @@ func assertIsReleaseBranch(version version.Version) error {
 	return nil
 }
 
-// bumpVersion updates the provided Version struct based on the bump type specified
-// in the command line arguments. It supports bumping the build number, patch, minor,
-// or major version components according to semantic versioning rules.
-// When bumping the build number, it can optionally fetch the latest build number
-// from the Play Store first.
-func bumpVersion(version *version.Version, cmd *cli.Command) error {
-	bumpType := cmd.String(flagBump)
-	logger.Info("Bumping version", "type", bumpType, "from", version)
-
-	switch bumpType {
-	case optBuild:
-		if cmd.Bool(flagFetch) {
-			logger.Info("Fetching latest build number from Play Store")
-			latestBuild, err := fetchLatestBuildFromPlayStore()
-			if err != nil {
-				return fmt.Errorf("fetching latest build: %w", err)
-			}
-			logger.Info("Fetched latest build", "latestBuild", latestBuild)
-			version.Build = latestBuild + 1
-		} else {
-			version.Build++
-		}
-		logger.Info("Incremented build number", "newBuild", version.Build)
-
-	case optPatch:
-		oldPatch := version.Patch
-		version.Build = 1
-		version.Patch++
-		logger.Info("Bumped patch version", "oldPatch", oldPatch, "newPatch", version.Patch)
-
-	case optMinor:
-		oldMinor := version.Minor
-		version.Build = 1
-		version.Patch = 1
-		version.Minor++
-		logger.Info("Bumped minor version", "oldMinor", oldMinor, "newMinor", version.Minor)
-
-	case optMajor:
-		oldMajor := version.Major
-		oldMinor := version.Minor
-		version.Build = 1
-		version.Patch = 1
-		version.Minor = version.Minor - (version.Minor % 100) + 100
-		version.Major++
-		logger.Info("Bumped major version",
-			"oldMajor", oldMajor,
-			"newMajor", version.Major,
-			"oldMinor", oldMinor,
-			"newMinor", version.Minor)
-
-	default:
-		logger.Error("Invalid bump option", "option", bumpType)
-		return errInvalidBumpOption
-	}
-
-	logger.Info("Version bumped successfully", "newVersion", version)
-	return nil
-}
-
-// findVersionInPubspec searches through the lines of pubspec.yaml to find the version
-// line, parses it, and returns the Version struct along with the line index where it was found.
-// Returns an error if the version line is not found or if parsing fails.
-func findVersionInPubspec(lines []string) (*version.Version, int, error) {
-	logger.Info("Searching for version in pubspec.yaml")
-
-	for i, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		if !strings.HasPrefix(trimmedLine, "version: ") {
-			continue
-		}
-
-		logger.Debug("Found version line", "line", trimmedLine, "index", i)
-		logger.Debug("Parsing version line", "line", trimmedLine)
-		version, err := version.Parse(trimmedLine)
-		if err != nil {
-			logger.Error("Failed to parse version line", "line", trimmedLine, "error", err)
-			return nil, -1, err
-		}
-		logger.Debug("Successfully parsed version", "version", version)
-
-		return version, i, nil
-	}
-
-	logger.Error("Version not found in pubspec.yaml")
-	return nil, -1, errVersionNotFound
-}
-
 // writeFile writes the provided lines back to the specified file path,
 // preserving the original file permissions. It returns an error if
 // getting file info or writing to the file fails.
@@ -287,11 +210,11 @@ func writeFile(path string, lines []string) error {
 	return nil
 }
 
-// fetchLatestBuildFromPlayStore runs a fastlane command to retrieve the
+// fetchLatestReleaseBuild runs a fastlane command to retrieve the
 // latest build number from the Google Play Store for the specified app.
 // It parses the output and returns the build number as an integer.
 // Returns an error if the command fails or the output cannot be parsed.
-func fetchLatestBuildFromPlayStore() (int, error) {
+func fetchLatestReleaseBuild() (int, error) {
 	logger.Info("Fetching latest build from Play Store using fastlane")
 
 	cmd := exec.Command("fastlane", "run", "google_play_track_version_codes",
@@ -330,4 +253,8 @@ func fetchLatestBuildFromPlayStore() (int, error) {
 
 	logger.Debug("Retrieved latest build number with fastlane", "build", build)
 	return build, nil
+}
+
+func fetchLatestDevelopmentBuild() (int, error) {
+	return -1, nil
 }
