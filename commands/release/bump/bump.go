@@ -13,7 +13,9 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v3"
+	cloudsql "ulist.app/ult/internal/cloud_sql"
 	"ulist.app/ult/internal/git"
+	"ulist.app/ult/internal/release"
 	"ulist.app/ult/internal/version"
 )
 
@@ -256,5 +258,15 @@ func fetchLatestReleaseBuild() (int, error) {
 }
 
 func fetchLatestDevelopmentBuild() (int, error) {
-	return -1, nil
+	db, err := cloudsql.ConnectWithConnector()
+	if err != nil {
+		return -1, err
+	}
+
+	release, err := release.FetchLatestRelease(db)
+	if err != nil {
+		return -1, err
+	}
+
+	return release.Bump, nil
 }
