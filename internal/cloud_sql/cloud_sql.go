@@ -32,17 +32,31 @@ func GenerateTables(db *sql.DB) error {
 		return fmt.Errorf("database connection is nil")
 	}
 
+	createAssigneesTableQuery := `
+	CREATE TABLE IF NOT EXISTS assignees (
+		id SERIAL PRIMARY KEY,
+		name TEXT NOT NULL,
+		email TEXT NOT NULL UNIQUE
+	);`
+	_, err := db.Exec(createAssigneesTableQuery)
+	if err != nil {
+		return fmt.Errorf("failed to create assignees table: %w", err)
+	}
+
 	// Create the releases table
 	createVersionsTableQuery := `
 	CREATE TABLE IF NOT EXISTS versions (
 		id SERIAL PRIMARY KEY,
-		version TEXT NOT NULL UNIQUE
+		year INTEGER NOT NULL,
+		major INTEGER NOT NULL,
+		minor INTEGER NOT NULL,
+    UNIQUE (year, major, minor)
 	);`
-	_, err := db.Exec(createVersionsTableQuery)
+	_, err = db.Exec(createVersionsTableQuery)
 	if err != nil {
 		return fmt.Errorf("failed to create versions table: %w", err)
 	}
-	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_versions_version ON versions(version);`)
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_versions_sort ON versions (year DESC, major DESC, minor DESC);`)
 	if err != nil {
 		return fmt.Errorf("failed to create index: %w", err)
 	}
@@ -50,14 +64,16 @@ func GenerateTables(db *sql.DB) error {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS releases (
 		branch TEXT NOT NULL,
-		assignee TEXT NOT NULL,
+		assignee_id INTEGER NOT NULL,
 		description TEXT,
+		commit TEXT,
 		date TIMESTAMPTZ NOT NULL,
 		issue_tracker_id INTEGER NOT NULL,
 		version_id INTEGER NOT NULL,
 		bump INTEGER NOT NULL DEFAULT 0,
 		PRIMARY KEY (version_id, bump),
-		FOREIGN KEY (version_id) REFERENCES versions(id)
+		FOREIGN KEY (version_id) REFERENCES versions(id),
+		FOREIGN KEY (assignee_id) REFERENCES assignees(id)
 	);`
 	_, err = db.Exec(createTableQuery)
 	if err != nil {

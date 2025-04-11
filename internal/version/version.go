@@ -21,12 +21,17 @@ func (v Version) String() string {
 	return fmt.Sprintf("%04d.%03d.%02d+%02d", v.Major, v.Minor, v.Patch, v.Build)
 }
 
+// String returns formatted version string without the build part like "2010.200.01"
+func (v Version) StringNoBuild() string {
+	return fmt.Sprintf("%04d.%03d.%02d", v.Major, v.Minor, v.Patch)
+}
+
 // Parse parses a version line like "version: 10.20.03+04" into a Version struct.
 // It expects the version to be in the format "major.minor.patch+build" where all
 // components are integers. Returns an error if the format is invalid or any component
 // cannot be parsed as an integer.
 func Parse(line string) (*Version, error) {
-	re := regexp.MustCompile(`^version: (\d+)\.(\d+)\.(\d+)\+(\d+)$`)
+	re := regexp.MustCompile(`(\d+)\.(\d+)\.(\d+)\+(\d+)$`)
 	matches := re.FindStringSubmatch(line)
 	if matches == nil || len(matches) != 5 {
 		return nil, fmt.Errorf("Version string doesn't match expected format \"version: 2020.100.01+01\", got: %s", line)

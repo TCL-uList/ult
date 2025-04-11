@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"ulist.app/ult/internal/assignee"
 )
 
 var (
@@ -156,8 +158,7 @@ func getCommitInfoFromStdout(stdout string) (*Commit, error) {
 
 	commit := Commit{
 		Hash:        matches[1],
-		AuthorName:  matches[2],
-		AuthorEmail: matches[3],
+		Assignee:    assignee.Assignee{Name: matches[2], Email: matches[3]},
 		Date:        date,
 		Message:     strings.TrimSpace(matches[5]),
 	}

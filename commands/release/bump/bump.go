@@ -268,5 +268,5 @@ func fetchLatestDevelopmentBuild() (int, error) {
 		return -1, err
 	}
 
-	return release.Bump, nil
+	return release.Bump(), nil
 }
