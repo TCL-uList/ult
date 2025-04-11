@@ -3,10 +3,13 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os/exec"
+	"regexp"
 	"strings"
+	"time"
 )
 
 var (
@@ -111,3 +114,49 @@ func GetCurrentBranch(branch string) (string, error) {
 	return currentBranch, nil
 }
 
+func GetLatestCommitInfo() (*Commit, error) {
+	logger.Info("Getting commit information")
+
+	output, err := execCommand("git", "log", "-1")
+	if err != nil {
+		return nil, fmt.Errorf("getting commit info: %w", err)
+	}
+
+	return getCommitInfoFromStdout(string(output))
+}
+
+func GetCommitInfo(hash string) (*Commit, error) {
+	logger.Info("Getting commit information")
+
+	if len(hash) == 0 {
+		return nil, errors.New("Commit hash cannot be empty")
+	}
+
+	output, err := execCommand("git", "log", "-1", hash)
+	if err != nil {
+		return nil, fmt.Errorf("getting commit info: %w", err)
+	}
+
+	return getCommitInfoFromStdout(string(output))
+}
+
+func getCommitInfoFromStdout(stdout string) (*Commit, error) {
+	re := regexp.MustCompile(`^commit (.*).*?\nAuthor: (.*?) <(.*)>.*?\nDate:   (.*?)\n\n(.*)`)
+	matches := re.FindStringSubmatch(stdout)
+
+	dateStr := matches[4]
+	date, err := time.Parse("Mon Jan 2 15:04:05 2006 -0700", dateStr)
+	if err != nil {
+		return nil, fmt.Errorf("not able to parse date (%s): %w", dateStr, err)
+	}
+
+	commit := Commit{
+		Hash:        matches[1],
+		AuthorName:  matches[2],
+		AuthorEmail: matches[3],
+		Date:        date,
+		Message:     strings.TrimSpace(matches[5]),
+	}
+
+	return &commit, nil
+}
