@@ -144,6 +144,10 @@ func getCommitInfoFromStdout(stdout string) (*Commit, error) {
 	re := regexp.MustCompile(`^commit (.*).*?\nAuthor: (.*?) <(.*)>.*?\nDate:   (.*?)\n\n(.*)`)
 	matches := re.FindStringSubmatch(stdout)
 
+	if len(matches) != 6 {
+		return nil, fmt.Errorf("commit with invalid format: %s", stdout)
+	}
+
 	dateStr := matches[4]
 	date, err := time.Parse("Mon Jan 2 15:04:05 2006 -0700", dateStr)
 	if err != nil {
