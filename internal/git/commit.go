@@ -3,10 +3,12 @@ package git
 import (
 	"fmt"
 	"time"
+
+	"ulist.app/ult/internal/assignee"
 )
 
 type Commit struct {
-	AuthorName  string
+	Assignee    assignee.Assignee
 	AuthorEmail string
 	Hash        string
 	Date        time.Time
@@ -17,8 +19,8 @@ func (c Commit) String() string {
 	return fmt.Sprintf(
 		"Hash: %s\nAuthor: %s <%s>\nDate: %s\nMessage: %s",
 		c.Hash,
-		c.AuthorName,
-		c.AuthorEmail,
+		c.Assignee.Name,
+		c.Assignee.Email,
 		c.Date,
 		c.Message,
 	)
