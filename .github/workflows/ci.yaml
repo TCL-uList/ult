@@ -29,7 +29,7 @@ jobs:
           echo "GOPATH=$GITHUB_WORKSPACE/.go" >> $GITHUB_ENV
           
       - name: Cache Go modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .go/pkg/mod/
           key: ${{ runner.os }}-go-${{ hashFiles('go.mod') }}
@@ -82,23 +82,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: binaries
-          path: ./
           
       - name: Create checksums
         run: |
           sha256sum linux-amd64.tar.gz > linux-amd64-checksum.txt
           sha256sum darwin-amd64.tar.gz > darwin-amd64-checksum.txt
           sha256sum darwin-arm64.tar.gz > darwin-arm64-checksum.txt
-          
-      # - name: Upload checksums
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: checksums
-      #     path: |
-      #       ./linux-amd64-checksum.txt
-      #       ./darwin-amd64-checksum.txt
-      #       ./darwin-arm64-checksum.txt
-      #     retention-days: 1
           
       - name: Create Release
         id: create_release
