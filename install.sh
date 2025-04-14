@@ -14,18 +14,44 @@ trap cleanup EXIT
 
 setup_path() {
   # set envs for FISH SHELL
-  if [ -f ~/.config/fish/config.fish ]; then
-    echo "set -gx ULT_PATH $INSTALL_DIR" >> ~/.config/fish/config.fish
-    echo "set -gx PATH \$PATH \$ULT_PATH" >> ~/.config/fish/config.fish
+  if command -v fish; then
+    touch ~/.config/fish/config.fish
+    {
+      printf "\n"
+      echo "# Added by ULT cli"
+      echo "set -gx ULT_PATH $INSTALL_DIR"
+      echo "set -gx PATH \$PATH \$ULT_PATH"
+    } >> ~/.config/fish/config.fish
+    echo "Populated ~/.config/fish/config.fish with path"
   else
     echo "Fish config not found. Skipping."
   fi
+
   # set envs for ZSH SHELL
-  if [ -f ~/.zshrc ]; then
-    echo "export ULT_PATH=$INSTALL_DIR" >> ~/.zshrc
-    echo "export PATH=\$PATH:\$ULT_PATH" >> ~/.zshrc
+  if command -v zsh; then
+    touch ~/.zshrc
+    {
+      printf "\n"
+      echo "# Added by ULT cli"
+      echo "export ULT_PATH=$INSTALL_DIR"
+      echo "export PATH=\$PATH:\$ULT_PATH"
+    } >> ~/.zshrc
+    echo "Populated ~/.zshrc with path"
   else
     echo "Zsh config not found. Skipping."
+  fi
+
+  # set envs for BASH SHELL
+  if command -v bash; then
+    touch ~/.bashrc
+    {
+      printf "\n"
+      echo "# Added by ULT cli"
+      echo "export ULT_PATH=$INSTALL_DIR"
+      echo "export PATH=\$PATH:\$ULT_PATH"
+    } >> ~/.bashrc
+  else
+    echo "Bash config not found. Skipping."
   fi
 }
 
@@ -65,7 +91,7 @@ setup_path
 printf "\n\n"
 printf "IMPORTANT --------------------------------------------------------------------------------"
 printf "\n"
-echo "if not using 'fish' or 'zsh' shell, you need to manually add this environmental variables:"
+echo "if not using 'fish', 'bash' or 'zsh' shell, you need to manually add this environmental variables:"
 printf "\n"
 echo "ULT_PATH=$INSTALL_DIR"
 echo "PATH=\$PATH:\$ULT_PATH"
