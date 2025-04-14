@@ -103,7 +103,7 @@ func PushChanges() error {
 // It uses 'git branch --show-current' to obtain the branch name.
 // The branch parameter is preserved for compatibility but is not used.
 // Returns the branch name and nil on success, or an empty string and an error on failure.
-func GetCurrentBranch(branch string) (string, error) {
+func GetCurrentBranch() (string, error) {
 	logger.Info("Getting current branch")
 
 	output, err := execCommand("git", "branch", "--show-current")

@@ -179,7 +179,7 @@ func assertIsReleaseBranch(version version.Version) error {
 	releaseBranch := fmt.Sprintf("release/v%s", version.String())
 	logger.Info("Checking release branch", "expected", releaseBranch)
 
-	currentBranch, err := git.GetCurrentBranch(releaseBranch)
+	currentBranch, err := git.GetCurrentBranch()
 	if err != nil {
 		logger.Error("Failed to get current branch", "error", err)
 		return fmt.Errorf("getting current branch: %w", err)
