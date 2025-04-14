@@ -21,8 +21,8 @@ import (
 
 // Command flag constants
 const (
-	flagLocal           = "local"
-	flagFetchForRelease = "fetch-play-store"
+	flagFetch           = "fetch"
+	flagFetchForRelease = "play-store"
 	flagNoCommitTag     = "no-commit-tag"
 	flagNoPush          = "no-push"
 )
@@ -46,12 +46,12 @@ var Cmd = cli.Command{
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
-			Name:  flagLocal,
-			Usage: "skip fetching the build number from external services and increment the local pubspec.yaml version",
+			Name:  flagFetch,
+			Usage: "fetch latest build number from external server before incrementing. Skiping this flag will use the local pubspec.yaml version build number",
 		},
 		&cli.BoolFlag{
 			Name:  flagFetchForRelease,
-			Usage: "fetch latest build number from private database before incrementing",
+			Usage: "use play store server to fetch",
 		},
 		&cli.BoolFlag{
 			Name:  flagNoCommitTag,
@@ -99,7 +99,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	logger.Info("Found version in pubspec", "version", version, "at line idx", idx)
 
 	var build int
-	if !cmd.Bool(flagLocal) {
+	if cmd.Bool(flagFetch) {
 		if cmd.Bool(flagFetchForRelease) {
 			build, err = fetchLatestReleaseBuild()
 			if err != nil {
