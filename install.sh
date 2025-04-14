@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Constants
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="$HOME/.local/share/ult"
 TMP_DIR=$(mktemp -d)
 
 # Cleanup function
@@ -39,14 +39,35 @@ echo "Extracting package..."
 tar -xzf "$TMP_DIR/ult.tar.gz" -C "$TMP_DIR"
 
 echo "Installing to $INSTALL_DIR..."
+mkdir -p "$INSTALL_DIR"
 mv "$TMP_DIR/${OS}-${ARCH}/ult" "$INSTALL_DIR/ult"
 chmod +x "$INSTALL_DIR/ult"
 
+# setup path
+# set envs for FISH SHELL
+echo "set -gx ULT_PATH $INSTALL_DIR" >> ~/.config/fish/config.fish
+echo "set -gx PATH \$PATH \$ULT_PATH" >> ~/.config/fish/config.fish
+
+# set envs for ZSH SHELL
+echo "export ULT_PATH=$INSTALL_DIR" >> ~/.zshrc
+echo "export PATH=\$PATH:\$ULT_PATH" >> ~/.zshrc
+
+printf "\n\n"
+printf "IMPORTANT --------------------------------------------------------------------------------"
+printf "\n"
+echo "if not using 'fish' or 'zsh' shell, you need to manually add this environmental variables:"
+printf "\n"
+echo "ULT_PATH=$INSTALL_DIR"
+echo "PATH=\$PATH:\$ULT_PATH"
+echo "------------------------------------------------------------------------------------------"
+printf "\n\n"
+
 # Verify installation
-if command -v ult &> /dev/null; then
+if command -v "$INSTALL_DIR"/ult &> /dev/null; then
   echo "Successfully installed ult CLI!"
-  echo "Version: $(ult version)"
+  VERSION=$("$INSTALL_DIR"/ult version)
+  echo "Version: $VERSION"
 else
-  echo "Installation failed: ult not found in PATH"
+  echo "Installation failed: ult not found"
   exit 1
 fi
