@@ -2,7 +2,6 @@ package commit_command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -47,25 +46,9 @@ var Cmd = cli.Command{
 
 func run(ctx context.Context, cmd *cli.Command) error {
 	token := cmd.String("token")
-	if len(token) == 0 {
-		return errors.New("token cannot be empty - use `--token='your-token'`")
-	}
-
 	projectId := cmd.String(flagProjectId)
-	if len(projectId) == 0 {
-		return fmt.Errorf("Project id cannot be empty, use: --%s='actual-id'", flagProjectId)
-	}
-
 	filePath := cmd.Args().First()
-	if len(filePath) == 0 {
-		return errors.New("file name is required as positional argument: `ult commit filename`")
-	}
-
 	commitMessage := cmd.String(flagMessage)
-	if len(commitMessage) == 0 {
-		return errors.New("commit message is required - use `--message='your message'`")
-	}
-
 	branch := cmd.String(flagBranch)
 	if len(branch) == 0 {
 		currentBranch, err := git.GetCurrentBranch()
