@@ -25,8 +25,10 @@ esac
 echo "Detected architecture: $ARCH"
 
 # Download and install
-echo "⬇️ Downloading ult CLI..."
-curl -L --progress-bar "https://github.com/TCL-uList/ult/releases/download/latest/${OS}_${ARCH}.tar.gz" -o "$TMP_DIR/ult.tar.gz"
+DOWNLOAD_URL="https://github.com/TCL-uList/ult/releases/latest/download/${OS}-${ARCH}.tar.gz"
+echo "⬇️ Downloading ult CLI: $DOWNLOAD_URL"
+curl -L --progress-bar "$DOWNLOAD_URL" -o "$TMP_DIR/ult.tar.gz"
+file "$TMP_DIR/ult.tar.gz"
 
 echo "Extracting package..."
 tar -xzf "$TMP_DIR/ult.tar.gz" -C "$TMP_DIR"
