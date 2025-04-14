@@ -9,6 +9,7 @@ env:
   GO111MODULE: 'on'
   CGO_ENABLED: '0'
   BINARY_NAME: 'ult'
+  LDFLAGS: 'LDFLAGS=-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }}'
 
 jobs:
   build:
@@ -26,10 +27,6 @@ jobs:
         run: |
           mkdir -p .go
           echo "GOPATH=$GITHUB_WORKSPACE/.go" >> $GITHUB_ENV
-
-      - name: Set LDFLAGS
-        run: |
-          echo "LDFLAGS=-s -w -X main.version=$(git describe --tags --abbrev=0) -X main.commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
           
       - name: Cache Go modules
         uses: actions/cache@v4
