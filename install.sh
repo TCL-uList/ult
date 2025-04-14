@@ -12,6 +12,23 @@ cleanup() {
 }
 trap cleanup EXIT
 
+setup_path() {
+  # set envs for FISH SHELL
+  if [ -f ~/.config/fish/config.fish ]; then
+    echo "set -gx ULT_PATH $INSTALL_DIR" >> ~/.config/fish/config.fish
+    echo "set -gx PATH \$PATH \$ULT_PATH" >> ~/.config/fish/config.fish
+  else
+    echo "Fish config not found. Skipping."
+  fi
+  # set envs for ZSH SHELL
+  if [ -f ~/.zshrc ]; then
+    echo "export ULT_PATH=$INSTALL_DIR" >> ~/.zshrc
+    echo "export PATH=\$PATH:\$ULT_PATH" >> ~/.zshrc
+  else
+    echo "Zsh config not found. Skipping."
+  fi
+}
+
 # Detect OS and Architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 echo "Detected operating system: $OS"
@@ -43,22 +60,8 @@ mkdir -p "$INSTALL_DIR"
 mv "$TMP_DIR/${OS}-${ARCH}/ult" "$INSTALL_DIR/ult"
 chmod +x "$INSTALL_DIR/ult"
 
-# setup path
-# set envs for FISH SHELL
-# For Fish shell (only if config.fish exists)
-if [ -f ~/.config/fish/config.fish ]; then
-  echo "set -gx ULT_PATH $INSTALL_DIR" >> ~/.config/fish/config.fish
-  echo "set -gx PATH \$PATH \$ULT_PATH" >> ~/.config/fish/config.fish
-else
-  echo "Fish config not found. Skipping."
-fi
-# set envs for ZSH SHELL
-if [ -f ~/.zshrc ]; then
-  echo "export ULT_PATH=$INSTALL_DIR" >> ~/.zshrc
-  echo "export PATH=\$PATH:\$ULT_PATH" >> ~/.zshrc
-else
-  echo "Zsh config not found. Skipping."
-fi
+setup_path
+
 printf "\n\n"
 printf "IMPORTANT --------------------------------------------------------------------------------"
 printf "\n"
