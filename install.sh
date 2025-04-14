@@ -26,7 +26,7 @@ echo "Detected architecture: $ARCH"
 
 # Download and install
 DOWNLOAD_URL="https://github.com/TCL-uList/ult/releases/latest/download/${OS}-${ARCH}.tar.gz"
-echo "⬇️ Downloading ult CLI: $DOWNLOAD_URL"
+echo "Downloading ult CLI: $DOWNLOAD_URL"
 curl -L --progress-bar "$DOWNLOAD_URL" -o "$TMP_DIR/ult.tar.gz"
 file "$TMP_DIR/ult.tar.gz"
 
