@@ -9,7 +9,7 @@ env:
   GO111MODULE: 'on'
   CGO_ENABLED: '0'
   BINARY_NAME: 'ult'
-  LDFLAGS: 'LDFLAGS=-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }}'
+  LDFLAGS: '-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }}'
 
 jobs:
   build:
