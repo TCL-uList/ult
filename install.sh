@@ -45,13 +45,20 @@ chmod +x "$INSTALL_DIR/ult"
 
 # setup path
 # set envs for FISH SHELL
-echo "set -gx ULT_PATH $INSTALL_DIR" >> ~/.config/fish/config.fish
-echo "set -gx PATH \$PATH \$ULT_PATH" >> ~/.config/fish/config.fish
-
+# For Fish shell (only if config.fish exists)
+if [ -f ~/.config/fish/config.fish ]; then
+  echo "set -gx ULT_PATH $INSTALL_DIR" >> ~/.config/fish/config.fish
+  echo "set -gx PATH \$PATH \$ULT_PATH" >> ~/.config/fish/config.fish
+else
+  echo "Fish config not found. Skipping."
+fi
 # set envs for ZSH SHELL
-echo "export ULT_PATH=$INSTALL_DIR" >> ~/.zshrc
-echo "export PATH=\$PATH:\$ULT_PATH" >> ~/.zshrc
-
+if [ -f ~/.zshrc ]; then
+  echo "export ULT_PATH=$INSTALL_DIR" >> ~/.zshrc
+  echo "export PATH=\$PATH:\$ULT_PATH" >> ~/.zshrc
+else
+  echo "Zsh config not found. Skipping."
+fi
 printf "\n\n"
 printf "IMPORTANT --------------------------------------------------------------------------------"
 printf "\n"
