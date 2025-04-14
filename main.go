@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v3"
+	commit_command "ulist.app/ult/commands/commit"
 	"ulist.app/ult/commands/release"
 	"ulist.app/ult/commands/secrets"
 )
@@ -35,6 +36,7 @@ func main() {
 		Commands: []*cli.Command{
 			&release_command.Cmd,
 			&secrets_command.Cmd,
+			&commit_command.Cmd,
 			&versionCmd,
 		},
 		Flags: []cli.Flag{
