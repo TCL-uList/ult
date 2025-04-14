@@ -34,7 +34,7 @@ echo "Extracting package..."
 tar -xzf "$TMP_DIR/ult.tar.gz" -C "$TMP_DIR"
 
 echo "Installing to $INSTALL_DIR..."
-sudo mv "$TMP_DIR/ult" "$INSTALL_DIR/ult"
+sudo mv "$TMP_DIR/${OS}-${ARCH}/ult" "$INSTALL_DIR/ult"
 sudo chmod +x "$INSTALL_DIR/ult"
 
 # Verify installation
