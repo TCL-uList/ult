@@ -1,0 +1,106 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO111MODULE: 'on'
+  CGO_ENABLED: '0'
+  BINARY_NAME: 'ult'
+  LDFLAGS: '-s -w -X main.version=$(git describe --tags --abbrev=0) -X main.commit=$(git rev-parse HEAD)'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: golang:1.23-alpine3.20
+    outputs:
+      build_job_id: ${{ steps.set_output.outputs.build_job_id }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go environment
+        run: |
+          mkdir -p .go
+          echo "GOPATH=$GITHUB_WORKSPACE/.go" >> $GITHUB_ENV
+          
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: .go/pkg/mod/
+          key: ${{ runner.os }}-go-${{ hashFiles('go.mod') }}
+          
+      - name: Download dependencies
+        run: go mod download
+        
+      - name: Check LDFLAGS env
+        run: echo $LDFLAGS
+          
+      - name: Build for Linux amd64
+        run: |
+          mkdir -p linux-amd64
+          GOOS=linux GOARCH=amd64 go build -ldflags="$LDFLAGS" -o linux-amd64/${BINARY_NAME} .
+          tar -czvf linux-amd64.tar.gz linux-amd64
+          
+      - name: Build for macOS amd64
+        run: |
+          mkdir -p darwin-amd64
+          GOOS=darwin GOARCH=amd64 go build -ldflags="$LDFLAGS" -o darwin-amd64/${BINARY_NAME} .
+          tar -czvf darwin-amd64.tar.gz darwin-amd64
+          
+      - name: Build for macOS arm64
+        run: |
+          mkdir -p darwin-arm64
+          GOOS=darwin GOARCH=arm64 go build -ldflags="$LDFLAGS" -o darwin-arm64/${BINARY_NAME} .
+          tar -czvf darwin-arm64.tar.gz darwin-arm64
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: |
+            ./linux-amd64.tar.gz
+            ./darwin-amd64.tar.gz
+            ./darwin-arm64.tar.gz
+          retention-days: 0  # never expire
+          
+      - name: Set output for release job
+        id: set_output
+        run: echo "build_job_id=$GITHUB_RUN_ID" >> $GITHUB_OUTPUT
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries
+          path: ./
+          
+      - name: Create checksums
+        run: |
+          sha256sum linux-amd64.tar.gz > linux-amd64-checksum.txt
+          sha256sum darwin-amd64.tar.gz > darwin-amd64-checksum.txt
+          sha256sum darwin-arm64.tar.gz > darwin-arm64-checksum.txt
+          
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            ./linux-amd64-checksum.txt
+            ./darwin-amd64-checksum.txt
+            ./darwin-arm64-checksum.txt
+            ./linux-amd64.tar.gz
+            ./darwin-amd64.tar.gz
+            ./darwin-arm64.tar.gz
