@@ -21,9 +21,10 @@ import (
 
 // Command flag constants
 const (
-	flagFetchForDevelopment = "development"
-	flagNoCommitTag         = "no-commit-tag"
-	flagNoPush              = "no-push"
+	flagLocal           = "local"
+	flagFetchForRelease = "fetch-play-store"
+	flagNoCommitTag     = "no-commit-tag"
+	flagNoPush          = "no-push"
 )
 
 // Bump option constants
@@ -45,7 +46,11 @@ var Cmd = cli.Command{
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
-			Name:  flagFetchForDevelopment,
+			Name:  flagLocal,
+			Usage: "skip fetching the build number from external services and increment the local pubspec.yaml version",
+		},
+		&cli.BoolFlag{
+			Name:  flagFetchForRelease,
 			Usage: "fetch latest build number from private database before incrementing",
 		},
 		&cli.BoolFlag{
@@ -66,7 +71,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	const pubspecPath = "pubspec.yaml"
 
 	logger.Debug("Starting version command",
-		"fetch for qa", cmd.Bool(flagFetchForDevelopment),
+		"fetch for qa", cmd.Bool(flagFetchForRelease),
 		"noCommitTag", cmd.Bool(flagNoCommitTag),
 		"noPush", cmd.Bool(flagNoPush))
 
@@ -94,15 +99,17 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	logger.Info("Found version in pubspec", "version", version, "at line idx", idx)
 
 	var build int
-	if cmd.Bool(flagFetchForDevelopment) {
-		build, err = fetchLatestDevelopmentBuild()
-		if err != nil {
-			return err
-		}
-	} else {
-		build, err = fetchLatestReleaseBuild()
-		if err != nil {
-			return err
+	if !cmd.Bool(flagLocal) {
+		if cmd.Bool(flagFetchForRelease) {
+			build, err = fetchLatestReleaseBuild()
+			if err != nil {
+				return err
+			}
+		} else {
+			build, err = fetchLatestDevelopmentBuild()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	version.Build = build
@@ -123,7 +130,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		logger.Info("Processing git operations", "commitAndTag", true)
 
 		// assert we are on a release branch if bumping for release version
-		if cmd.Bool(flagFetchForDevelopment) {
+		if cmd.Bool(flagFetchForRelease) {
 			logger.Info("Checking release branch", "version", version)
 			if err := assertIsReleaseBranch(*version); err != nil {
 				return err
@@ -141,7 +148,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		// add "latest" tag for release bumps
-		if cmd.Bool(flagFetchForDevelopment) {
+		if cmd.Bool(flagFetchForRelease) {
 			logger.Info("Creating 'latest' tag for release")
 			if err := git.CreateTag("latest"); err != nil {
 				return err
