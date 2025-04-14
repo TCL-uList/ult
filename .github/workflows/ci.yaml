@@ -66,7 +66,7 @@ jobs:
             ./linux-amd64.tar.gz
             ./darwin-amd64.tar.gz
             ./darwin-arm64.tar.gz
-          retention-days: 0  # never expire
+          retention-days: 1
           
       - name: Set output for release job
         id: set_output
@@ -89,6 +89,16 @@ jobs:
           sha256sum linux-amd64.tar.gz > linux-amd64-checksum.txt
           sha256sum darwin-amd64.tar.gz > darwin-amd64-checksum.txt
           sha256sum darwin-arm64.tar.gz > darwin-arm64-checksum.txt
+          
+      - name: Upload checksums
+        uses: actions/upload-artifact@v3
+        with:
+          name: checksums
+          path: |
+            ./linux-amd64-checksum.txt
+            ./darwin-amd64-checksum.txt
+            ./darwin-arm64-checksum.txt
+          retention-days: 1
           
       - name: Create Release
         id: create_release
