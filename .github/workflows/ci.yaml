@@ -59,7 +59,7 @@ jobs:
           tar -czvf darwin-arm64.tar.gz darwin-arm64
           
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: binaries
           path: |
@@ -79,7 +79,7 @@ jobs:
     
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: binaries
           path: ./
@@ -90,15 +90,15 @@ jobs:
           sha256sum darwin-amd64.tar.gz > darwin-amd64-checksum.txt
           sha256sum darwin-arm64.tar.gz > darwin-arm64-checksum.txt
           
-      - name: Upload checksums
-        uses: actions/upload-artifact@v3
-        with:
-          name: checksums
-          path: |
-            ./linux-amd64-checksum.txt
-            ./darwin-amd64-checksum.txt
-            ./darwin-arm64-checksum.txt
-          retention-days: 1
+      # - name: Upload checksums
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: checksums
+      #     path: |
+      #       ./linux-amd64-checksum.txt
+      #       ./darwin-amd64-checksum.txt
+      #       ./darwin-arm64-checksum.txt
+      #     retention-days: 1
           
       - name: Create Release
         id: create_release
