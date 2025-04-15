@@ -142,6 +142,74 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestFetchFromLines(t *testing.T) {
+	tt := []struct {
+		name    string
+		input   []string
+		want    *Version
+		wantIdx int
+		wantErr bool
+	}{
+		{
+			name: "no version in list",
+			input: []string{
+				"aa",
+				"bb",
+				"cc",
+			},
+			wantErr: true,
+		},
+		{
+			name: "no version in list with empty space",
+			input: []string{
+				"",
+				"----",
+				"\n",
+			},
+			wantErr: true,
+		},
+		{
+			name: "version at end",
+			input: []string{
+				"",
+				"----",
+				"\n",
+				"version: 2000.200.02+02",
+			},
+			want:    &Version{Major: 2000, Minor: 200, Patch: 02, Build: 02},
+			wantIdx: 3,
+			wantErr: false,
+		},
+		{
+			name: "version at end with no prefix",
+			input: []string{
+				"",
+				"----",
+				"2000.200.02+02",
+				"\n",
+			},
+			want:    &Version{Major: 2000, Minor: 200, Patch: 02, Build: 02},
+			wantIdx: 2,
+			wantErr: false,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got, idx, err := FetchFromLines(tc.input)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("ParseVersion() error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if !tc.wantErr && !versionsEqual(*got, *tc.want) {
+				t.Errorf("ParseVersion() = %+v, want %+v", got, tc.want)
+			}
+			if !tc.wantErr && idx != tc.wantIdx {
+				t.Errorf("FetchFromLines() idx = %d, want %+v", idx, tc.wantIdx)
+			}
+		})
+	}
+}
+
 func versionsEqual(a, b Version) bool {
 	return a.Major == b.Major &&
 		a.Minor == b.Minor &&
