@@ -8,11 +8,10 @@ import (
 )
 
 type Commit struct {
-	Assignee    assignee.Assignee
-	AuthorEmail string
-	Hash        string
-	Date        time.Time
-	Message     string
+	Assignee assignee.Assignee
+	Hash     string
+	Date     time.Time
+	Message  string
 }
 
 func (c Commit) String() string {

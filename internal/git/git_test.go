@@ -100,9 +100,6 @@ func assertCommitEqual(t *testing.T, actual, expected *Commit) {
 	if actual.Assignee != expected.Assignee {
 		t.Errorf("AuthorName mismatch: got %q, want %q", actual.Assignee, expected.Assignee)
 	}
-	if actual.AuthorEmail != expected.AuthorEmail {
-		t.Errorf("AuthorEmail mismatch: got %q, want %q", actual.AuthorEmail, expected.AuthorEmail)
-	}
 	if !actual.Date.Equal(expected.Date) {
 		t.Errorf("Date mismatch: got %v, want %v", actual.Date, expected.Date)
 	}
