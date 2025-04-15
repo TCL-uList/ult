@@ -13,3 +13,8 @@ func GetOrError(key string, cmd *cli.Command) (string, error) {
 	}
 	return value, nil
 }
+
+// Ptr is a helper that returns a pointer to v.
+func Ptr[T any](v T) *T {
+	return &v
+}
