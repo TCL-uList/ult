@@ -27,14 +27,6 @@ const (
 	flagNoPush          = "no-push"
 )
 
-// Bump option constants
-const (
-	optBuild = "build"
-	optPatch = "patch"
-	optMinor = "minor"
-	optMajor = "major"
-)
-
 var (
 	logger = slog.Default().WithGroup("bump_command")
 )

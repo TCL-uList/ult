@@ -31,7 +31,10 @@ func (v Version) StringNoBuild() string {
 // components are integers. Returns an error if the format is invalid or any component
 // cannot be parsed as an integer.
 func Parse(line string) (*Version, error) {
-	re := regexp.MustCompile(`(\d+)\.(\d+)\.(\d+)\+(\d+)$`)
+	if len(line) == 0 {
+		return nil, errors.New("Version line string cannot be empty")
+	}
+	re := regexp.MustCompile(`(\d+)\.(\d+)\.(\d+)\+(\d+)`)
 	matches := re.FindStringSubmatch(line)
 	if matches == nil || len(matches) != 5 {
 		return nil, fmt.Errorf("Version string doesn't match expected format \"version: 2020.100.01+01\", got: %s", line)
@@ -96,14 +99,9 @@ func (v *Version) Bump(bumpType BumpType) {
 // Returns an error if the version line is not found or if parsing fails.
 func FetchFromLines(lines []string) (*Version, int, error) {
 	for i, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		if !strings.HasPrefix(trimmedLine, "version: ") {
-			continue
-		}
-
-		version, err := Parse(trimmedLine)
+		version, err := Parse(line)
 		if err != nil {
-			return nil, -1, err
+			continue
 		}
 
 		return version, i, nil
