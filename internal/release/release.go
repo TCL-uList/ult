@@ -47,7 +47,7 @@ func SaveAssignee(db *sql.DB, assignee assignee.Assignee) (int, error) {
   WITH insert_attempt AS (
     INSERT INTO assignees (name, email)
     VALUES ($1, $2)
-    ON CONFLICT (email) DO NOTHING
+    ON CONFLICT DO NOTHING
     RETURNING id
   )
   SELECT id FROM insert_attempt
