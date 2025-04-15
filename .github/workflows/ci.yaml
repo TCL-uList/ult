@@ -12,6 +12,33 @@ env:
   LDFLAGS: '-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }}'
 
 jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    container: golang:1.23-alpine3.20
+    outputs:
+      build_job_id: ${{ steps.set_output.outputs.build_job_id }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go environment
+        run: |
+          mkdir -p .go
+          echo "GOPATH=$GITHUB_WORKSPACE/.go" >> $GITHUB_ENV
+          
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: .go/pkg/mod/
+          key: ${{ runner.os }}-go-${{ hashFiles('go.mod') }}
+          
+      - name: Download dependencies
+        run: go mod download
+        
+      - name: Run Tests
+        run: go test ./...
   build:
     name: Build
     runs-on: ubuntu-latest
