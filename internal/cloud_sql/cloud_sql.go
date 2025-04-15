@@ -16,6 +16,13 @@ func ConnectWithConnector() (*sql.DB, error) {
 		dbName = "ep-bold-mud-ac6h4c01-pooler.sa-east-1.aws.neon.tech/neondb"
 	)
 
+	if len(dbUser) == 0 {
+		panic("ULT_DB_USER variable must not be empty")
+	}
+	if len(dbPwd) == 0 {
+		panic("ULT_DB_PASS variable must not be empty")
+	}
+
 	databaseURL := fmt.Sprintf("postgresql://%s:%s@%s?sslmode=require", dbUser, dbPwd, dbName)
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
