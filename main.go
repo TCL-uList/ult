@@ -49,6 +49,11 @@ func main() {
 				Name:  "token",
 				Usage: "token that will be used on http requests",
 			},
+			&cli.StringFlag{
+				Name:    "project-id",
+				Aliases: []string{"id"},
+				Usage:   "The ID or URL-encoded path of the project",
+			},
 		},
 	}
 

@@ -37,10 +37,6 @@ var Cmd = cli.Command{
 			Aliases: []string{"m"},
 			Usage:   "commit message",
 		},
-		&cli.StringFlag{
-			Name:  flagProjectId,
-			Usage: "The ID or URL-encoded path of the project",
-		},
 	},
 }
 
