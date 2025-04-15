@@ -157,10 +157,10 @@ func getCommitInfoFromStdout(stdout string) (*Commit, error) {
 	}
 
 	commit := Commit{
-		Hash:        matches[1],
-		Assignee:    assignee.Assignee{Name: matches[2], Email: matches[3]},
-		Date:        date,
-		Message:     strings.TrimSpace(matches[5]),
+		Hash:     matches[1],
+		Assignee: assignee.Assignee{Name: matches[2], Email: matches[3]},
+		Date:     date,
+		Message:  strings.TrimSpace(matches[5]),
 	}
 
 	return &commit, nil
