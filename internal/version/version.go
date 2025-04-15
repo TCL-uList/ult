@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"ulist.app/ult/internal/utils"
 )
 
 // Version represents semantic versioning with build number
@@ -31,14 +29,14 @@ func (v Version) StringNoBuild() string {
 // It expects the version to be in the format "major.minor.patch+build" where all
 // components are integers. Returns an error if the format is invalid or any component
 // cannot be parsed as an integer.
-func Parse(line *string) (*Version, error) {
-	if len(*line) == 0 {
+func Parse(line string) (*Version, error) {
+	if len(line) == 0 {
 		return nil, errors.New("Version line string cannot be empty")
 	}
 	re := regexp.MustCompile(`(\d+)\.(\d+)\.(\d+)\+(\d+)`)
-	matches := re.FindStringSubmatch(*line)
+	matches := re.FindStringSubmatch(line)
 	if matches == nil || len(matches) != 5 {
-		return nil, fmt.Errorf("Version string doesn't match expected format \"version: 2020.100.01+01\", got: %s", *line)
+		return nil, fmt.Errorf("Version string doesn't match expected format \"version: 2020.100.01+01\", got: %s", line)
 	}
 
 	major, err := strconv.Atoi(matches[1])
@@ -105,7 +103,7 @@ func FetchFromLines(lines []string) (*Version, int, error) {
 			continue
 		}
 
-		version, err := Parse(utils.Ptr(line))
+		version, err := Parse(line)
 		if err != nil {
 			continue
 		}

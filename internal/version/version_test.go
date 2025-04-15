@@ -2,8 +2,6 @@ package version
 
 import (
 	"testing"
-
-	"ulist.app/ult/internal/utils"
 )
 
 func TestBump(t *testing.T) {
@@ -131,7 +129,7 @@ func TestParse(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := Parse(utils.Ptr(tc.input))
+			got, err := Parse(tc.input)
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("ParseVersion() error = %v, wantErr %v", err, tc.wantErr)
 			}
