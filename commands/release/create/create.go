@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v3"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"ulist.app/ult/internal/assignee"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
 	"ulist.app/ult/internal/git"
 	"ulist.app/ult/internal/release"
+	"ulist.app/ult/internal/utils"
 	"ulist.app/ult/internal/version"
 )
 
@@ -20,6 +23,7 @@ const (
 	flagIssueTrackerID = "issue"
 	flagBranch         = "branch"
 	flagVersion        = "version"
+	flagApi            = "api"
 )
 
 var (
@@ -53,6 +57,11 @@ var fromCommitCmd = cli.Command{
 			Usage:   "the version of this release (if ommited, will try to fetch from pubspec.yaml file)",
 			Aliases: []string{"v"},
 		},
+		&cli.BoolFlag{
+			Name:    flagApi,
+			Usage:   "fetch information from gitlab api",
+			Aliases: []string{"a"},
+		},
 	},
 }
 
@@ -78,19 +87,41 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 	branch := cmd.String(flagBranch)
 	issueTrackerID := cmd.Int(flagIssueTrackerID)
 	versionStr := cmd.String(flagVersion)
+	api := cmd.Bool(flagApi)
 	version, err := version.Parse(versionStr)
 	if err != nil {
 		return err
 	}
 
 	var commit *git.Commit
-	if useLatest {
-		commit, err = git.GetLatestCommitInfo()
+	if api {
+		projectId, err := utils.GetOrError("project-id", cmd)
 		if err != nil {
 			return err
 		}
+		token, err := utils.GetOrError("token", cmd)
+		if err != nil {
+			return err
+		}
+
+		repo, err := gitlab.NewClient(token)
+		if err != nil {
+			return err
+		}
+
+		gitlabCommit, _, err := repo.Commits.GetCommit(projectId, hash, &gitlab.GetCommitOptions{})
+		if err != nil {
+			return err
+		}
+
+		commit = &git.Commit{
+			Assignee: assignee.Assignee{Name: gitlabCommit.AuthorName, Email: gitlabCommit.AuthorEmail},
+			Hash:     hash,
+			Date:     *gitlabCommit.CommittedDate,
+			Message:  gitlabCommit.Message,
+		}
 	} else {
-		commit, err = git.GetCommitInfo(hash)
+		commit, err = getCommitFromGitCommand(hash)
 		if err != nil {
 			return err
 		}
@@ -118,6 +149,25 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 
 	logger.Info("Created release successfully")
 	return nil
+}
+
+func getCommitFromGitCommand(hash string) (*git.Commit, error) {
+	var err error
+	var commit *git.Commit
+
+	if len(hash) == 0 {
+		commit, err = git.GetLatestCommitInfo()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		commit, err = git.GetCommitInfo(hash)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return commit, nil
 }
 
 func run(ctx context.Context, cmd *cli.Command) error {
