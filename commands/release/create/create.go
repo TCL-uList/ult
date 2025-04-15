@@ -105,10 +105,6 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 	api := cmd.Bool(flagApi)
-	ver, err = version.Parse(utils.Ptr(versionStr))
-	if err != nil {
-		return err
-	}
 
 	var commit *git.Commit
 	if api {
