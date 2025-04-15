@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/urfave/cli/v3"
@@ -82,12 +84,28 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 		return errors.New("a commit 'hash' must be passesed as positional argument or the flag '--latest'")
 	}
 
+	var ver *version.Version
 	var err error
 	branch := cmd.String(flagBranch)
 	issueTrackerID := cmd.Int(flagIssueTrackerID)
 	versionStr := cmd.String(flagVersion)
+	if len(versionStr) == 0 {
+		logger.Info("no version was passed as argument, will try to fetch from pubspec file")
+		contents, err := os.ReadFile("pubspec.yaml")
+		if err != nil {
+			return fmt.Errorf("reading pubspec.yaml: %w", err)
+		}
+
+		lines := strings.Split(string(contents), "\n")
+		logger.Debug("Read pubspec.yaml", "lineCount", len(lines))
+
+		ver, _, err = version.FetchFromLines(lines)
+		if err != nil {
+			return fmt.Errorf("parsing version: %w", err)
+		}
+	}
 	api := cmd.Bool(flagApi)
-	version, err := version.Parse(versionStr)
+	ver, err = version.Parse(versionStr)
 	if err != nil {
 		return err
 	}
@@ -139,7 +157,7 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 		Description:    commit.Message,
 		Commit:         commit.Hash,
 		IssueTrackerID: int(issueTrackerID),
-		Version:        *version,
+		Version:        *ver,
 		Date:           time.Now(),
 	}
 
