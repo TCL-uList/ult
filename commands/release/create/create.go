@@ -47,10 +47,9 @@ var fromCommitCmd = cli.Command{
 			Required: true,
 		},
 		&cli.IntFlag{
-			Name:     flagIssueTrackerID,
-			Usage:    "issue tracker id related with this release (required)",
-			Aliases:  []string{"i"},
-			Required: true,
+			Name:    flagIssueTrackerID,
+			Usage:   "issue tracker id related with this release. if ommited will try to get from branch name",
+			Aliases: []string{"i"},
 		},
 		&cli.StringFlag{
 			Name:    flagVersion,
@@ -107,6 +106,13 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 		repo, err := gitlab.NewClient(token)
 		if err != nil {
 			return err
+		}
+
+		if issueTrackerID == 0 {
+			issueTrackerID, err = git.GetIssueNumberFromBranch(branch)
+			if err != nil {
+				return err
+			}
 		}
 
 		gitlabCommit, _, err := repo.Commits.GetCommit(projectId, hash, &gitlab.GetCommitOptions{})

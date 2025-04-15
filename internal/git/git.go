@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -164,4 +165,25 @@ func getCommitInfoFromStdout(stdout string) (*Commit, error) {
 	}
 
 	return &commit, nil
+}
+
+func GetIssueNumberFromBranch(branch string) (int64, error) {
+	if len(branch) == 0 {
+		return 0, errors.New("branch name cannot be empty")
+	}
+
+	name := strings.ToLower(branch)
+	re := regexp.MustCompile(`app-(\d*)`)
+	matches := re.FindStringSubmatch(name)
+
+	if len(matches) == 0 {
+		return 0, fmt.Errorf("did not found issue number in: %s. branch name must contain 'app-0000' to be valid", name)
+	}
+
+	issue, err := strconv.ParseInt(matches[1], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("not able to convert issue number (%s) to int: %w", matches[1], err)
+	}
+
+	return issue, nil
 }

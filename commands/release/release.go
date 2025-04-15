@@ -5,6 +5,7 @@ package release_command
 import (
 	"github.com/urfave/cli/v3"
 	"ulist.app/ult/commands/release/bump"
+	"ulist.app/ult/commands/release/create"
 )
 
 const (
@@ -16,5 +17,6 @@ var Cmd = cli.Command{
 	Usage: "increment the app version number",
 	Commands: []*cli.Command{
 		&bump.Cmd,
+		&create.Cmd,
 	},
 }
