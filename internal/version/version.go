@@ -99,15 +99,9 @@ func (v *Version) Bump(bumpType BumpType) {
 // Returns an error if the version line is not found or if parsing fails.
 func FetchFromLines(lines []string) (*Version, int, error) {
 	for i, line := range lines {
-		if !strings.HasPrefix(line, "version: ") {
-			continue
-		}
-
-		fmt.Printf("found version line: %s\n", line)
-
 		version, err := Parse(line)
 		if err != nil {
-			return nil, -1, err
+			continue
 		}
 
 		return version, i, nil
