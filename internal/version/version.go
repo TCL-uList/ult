@@ -98,6 +98,11 @@ func (v *Version) Bump(bumpType BumpType) {
 // Returns an error if the version line is not found or if parsing fails.
 func FetchFromLines(lines []string) (*Version, int, error) {
 	for i, line := range lines {
+		// the minimum string containing a version (0.0.0+00) has 8 characters
+		if len(line) < 8 {
+			continue
+		}
+
 		version, err := Parse(line)
 		if err != nil {
 			continue
