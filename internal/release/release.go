@@ -164,27 +164,27 @@ func FetchLatestRelease(db *sql.DB) (*Release, error) {
 	var bump int
 
 	query := `
-  SELECT 
-      r.branch, 
-      a.name, 
-      a.email, 
-      r.description, 
-      r.commit, 
-      r.date, 
-      r.issue_tracker_id, 
+  SELECT
+      r.branch,
+      a.name,
+      a.email,
+      r.description,
+      r.commit,
+      r.date,
+      r.issue_tracker_id,
       v.year,
       v.major,
       v.minor,
-      r.bump 
-  FROM 
+      r.bump
+  FROM
       releases r
-  JOIN 
+  JOIN
       versions v ON r.version_id = v.id
   JOIN
       assignees a ON r.assignee_id = a.id
-  ORDER BY 
+  ORDER BY
       v.year DESC,
-      v.major DESC, 
+      v.major DESC,
       v.minor DESC,
       r.bump DESC
   LIMIT 1;`
