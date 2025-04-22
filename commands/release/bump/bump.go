@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v3"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
+	"ulist.app/ult/internal/google"
 	"ulist.app/ult/internal/release"
 	"ulist.app/ult/internal/version"
 )
@@ -80,10 +78,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	var build int
 	if cmd.Bool(flagFetch) {
 		if cmd.Bool(flagFetchForRelease) {
-			build, err = fetchLatestReleaseBuild()
+			latest, err := fetchLatestReleaseBuild()
 			if err != nil {
 				return err
 			}
+			build = int(latest)
 		} else {
 			build, err = fetchLatestDevelopmentBuild()
 			if err != nil {
@@ -133,45 +132,19 @@ func writeFile(path string, lines []string) error {
 // latest build number from the Google Play Store for the specified app.
 // It parses the output and returns the build number as an integer.
 // Returns an error if the command fails or the output cannot be parsed.
-func fetchLatestReleaseBuild() (int, error) {
-	logger.Info("Fetching latest build from Play Store using fastlane")
+func fetchLatestReleaseBuild() (int64, error) {
+	logger.Info("Fetching latest build from Play Store")
 
-	cmd := exec.Command("fastlane", "run", "google_play_track_version_codes",
-		"json_key:.secrets/prod/GoogleApplicationCredentials-ulist.json",
-		"package_name:app.ulist")
-
-	logger.Debug("Executing fastlane command")
-	output, err := cmd.Output()
+	contents, err := os.ReadFile(".secrets/prod/GoogleApplicationCredentials-ulist.json")
 	if err != nil {
-		var stderr string
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			stderr = string(exitErr.Stderr)
-		}
-		logger.Error("Fastlane command failed",
-			"stdout", string(output),
-			"stderr", stderr,
-			"error", err)
-		return 0, fmt.Errorf("running fastlane command: %w", err)
+		return 0, err
 	}
-
-	outputStr := string(output)
-	logger.Debug("Parsing fastlane output", "output", outputStr)
-
-	re := regexp.MustCompile(`Result: \[(\d+)\]`)
-	matches := re.FindStringSubmatch(outputStr)
-	if matches == nil || len(matches) != 2 {
-		logger.Error("Unexpected fastlane output format", "output", outputStr)
-		return 0, fmt.Errorf("unexpected fastlane output: %s", outputStr)
-	}
-
-	build, err := strconv.Atoi(matches[1])
+	latest, err := google.GetVersionFromLatestRelease(contents, "app.ulist")
 	if err != nil {
-		logger.Error("Failed to parse build number", "value", matches[1], "error", err)
-		return 0, fmt.Errorf("parsing build number: %w", err)
+		return 0, err
 	}
 
-	logger.Debug("Retrieved latest build number with fastlane", "build", build)
-	return build, nil
+	return latest, nil
 }
 
 func fetchLatestDevelopmentBuild() (int, error) {
