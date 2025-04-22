@@ -14,7 +14,6 @@ import (
 
 	"github.com/urfave/cli/v3"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
-	"ulist.app/ult/internal/git"
 	"ulist.app/ult/internal/release"
 	"ulist.app/ult/internal/version"
 )
@@ -23,8 +22,6 @@ import (
 const (
 	flagFetch           = "fetch"
 	flagFetchForRelease = "play-store"
-	flagNoCommitTag     = "no-commit-tag"
-	flagNoPush          = "no-push"
 )
 
 var (
@@ -45,14 +42,6 @@ var Cmd = cli.Command{
 			Name:  flagFetchForRelease,
 			Usage: "use play store server to fetch",
 		},
-		&cli.BoolFlag{
-			Name:  flagNoCommitTag,
-			Usage: "skip creating Git commits and tag for version changes. Use with --no-push for dry-run simulations",
-		},
-		&cli.BoolFlag{
-			Name:  flagNoPush,
-			Usage: "skip pushing changes to remote repository. Changes will remain local for verification",
-		},
 	},
 }
 
@@ -63,9 +52,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	const pubspecPath = "pubspec.yaml"
 
 	logger.Debug("Starting version command",
-		"fetch for qa", cmd.Bool(flagFetchForRelease),
-		"noCommitTag", cmd.Bool(flagNoCommitTag),
-		"noPush", cmd.Bool(flagNoPush))
+		"fetch for qa", cmd.Bool(flagFetchForRelease))
 
 	bumpType, err := version.ParseBumpType(cmd.Args().First())
 	if err != nil {
@@ -116,75 +103,6 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	logger.Info("Updated pubspec.yaml with new version", "newVersion", version)
-
-	shouldCommitAndTag := !cmd.Bool(flagNoCommitTag)
-	if shouldCommitAndTag {
-		logger.Info("Processing git operations", "commitAndTag", true)
-
-		// assert we are on a release branch if bumping for release version
-		if cmd.Bool(flagFetchForRelease) {
-			logger.Info("Checking release branch", "version", version)
-			if err := assertIsReleaseBranch(*version); err != nil {
-				return err
-			}
-		}
-
-		logger.Info("Committing changes")
-		if err := git.CommitChanges(); err != nil {
-			return err
-		}
-
-		logger.Info("Creating version tag", "tag", version.String())
-		if err := git.CreateTag(version.String()); err != nil {
-			return err
-		}
-
-		// add "latest" tag for release bumps
-		if cmd.Bool(flagFetchForRelease) {
-			logger.Info("Creating 'latest' tag for release")
-			if err := git.CreateTag("latest"); err != nil {
-				return err
-			}
-		}
-	} else {
-		logger.Info("Skipping git commit and tag", "noCommitTag", true)
-	}
-
-	shouldPush := !cmd.Bool(flagNoPush)
-	if shouldPush {
-		logger.Info("Pushing changes to remote")
-		if err := git.PushChanges(); err != nil {
-			return err
-		}
-		logger.Info("Changes pushed successfully")
-	} else {
-		logger.Info("Skipping git push", "noPush", true)
-	}
-
-	logger.Info("Version command completed successfully", "newVersion", version)
-	return nil
-}
-
-// assertIsReleaseBranch verifies that the current git branch matches the expected release branch
-// pattern for the given version.
-func assertIsReleaseBranch(version version.Version) error {
-	releaseBranch := fmt.Sprintf("release/v%s", version.String())
-	logger.Info("Checking release branch", "expected", releaseBranch)
-
-	currentBranch, err := git.GetCurrentBranch()
-	if err != nil {
-		logger.Error("Failed to get current branch", "error", err)
-		return fmt.Errorf("getting current branch: %w", err)
-	}
-
-	if currentBranch != releaseBranch {
-		logger.Error("Branch mismatch",
-			"expected", releaseBranch,
-			"actual", currentBranch)
-		return fmt.Errorf("branch mismatch, expected: %q, found: %q when bumping for release version", releaseBranch, currentBranch)
-	}
-
-	logger.Info("Confirmed on correct release branch", "branch", releaseBranch)
 	return nil
 }
 
