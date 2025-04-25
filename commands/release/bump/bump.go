@@ -11,7 +11,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
-	"ulist.app/ult/internal/google"
+	"ulist.app/ult/internal/playstore"
 	"ulist.app/ult/internal/release"
 	"ulist.app/ult/internal/version"
 )
@@ -139,7 +139,7 @@ func fetchLatestReleaseBuild() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	latest, err := google.GetVersionFromLatestRelease(contents, "app.ulist")
+	latest, err := playstore.GetVersionFromLatestRelease(contents, "app.ulist")
 	if err != nil {
 		return 0, err
 	}
