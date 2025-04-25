@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"ulist.app/ult/commands/release/bump"
 	"ulist.app/ult/commands/release/create"
-	"ulist.app/ult/internal/google"
+	"ulist.app/ult/commands/release/deploy"
 )
 
 const (
@@ -23,6 +23,7 @@ var Cmd = cli.Command{
 	Commands: []*cli.Command{
 		&bump.Cmd,
 		&create.Cmd,
+		&deploy.Cmd,
 	},
 }
 
