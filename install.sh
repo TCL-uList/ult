@@ -68,7 +68,16 @@ esac
 echo "Detected architecture: $ARCH"
 
 # Download and install
-DOWNLOAD_URL="https://github.com/TCL-uList/ult/releases/latest/download/${OS}-${ARCH}.tar.gz"
+# Check if a explicit version was passed by argument
+if [ $# -gt 0 ]; then
+  DOWNLOAD_URL="https://github.com/TCL-uList/ult/releases/download/$1/${OS}-${ARCH}.tar.gz"
+else
+  # download latest version
+  DOWNLOAD_URL="https://github.com/TCL-uList/ult/releases/latest/download/${OS}-${ARCH}.tar.gz"
+fi
+if condition; then
+  command ...
+fi
 echo "Downloading ult CLI: $DOWNLOAD_URL"
 curl -L --progress-bar "$DOWNLOAD_URL" -o "$TMP_DIR/ult.tar.gz"
 
