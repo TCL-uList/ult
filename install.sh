@@ -75,9 +75,6 @@ else
   # download latest version
   DOWNLOAD_URL="https://github.com/TCL-uList/ult/releases/latest/download/${OS}-${ARCH}.tar.gz"
 fi
-if condition; then
-  command ...
-fi
 echo "Downloading ult CLI: $DOWNLOAD_URL"
 curl -L --progress-bar "$DOWNLOAD_URL" -o "$TMP_DIR/ult.tar.gz"
 
