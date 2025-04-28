@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -23,7 +24,7 @@ func main() {
 		Name:  "version",
 		Usage: "show version information for ult",
 		Action: func(ctx context.Context, c *cli.Command) error {
-			println(version, commit)
+			fmt.Println(version, commit)
 			return nil
 		},
 	}

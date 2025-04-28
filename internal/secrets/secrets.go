@@ -18,9 +18,9 @@ func PrintSecureFile(file *gitlab.SecureFile, onlyId bool, targetName string) {
 	}
 
 	if onlyId {
-		println(file.ID)
+		fmt.Println(file.ID)
 	} else {
-		println(secureFileString(file))
+		fmt.Println(secureFileString(file))
 	}
 }
 
