@@ -20,6 +20,7 @@ import (
 const (
 	flagFetch           = "fetch"
 	flagFetchForRelease = "play-store"
+	flagCredentialsPath = "credentials"
 )
 
 var (
@@ -39,6 +40,10 @@ var Cmd = cli.Command{
 		&cli.BoolFlag{
 			Name:  flagFetchForRelease,
 			Usage: "use play store server to fetch",
+		},
+		&cli.StringFlag{
+			Name:  flagCredentialsPath,
+			Usage: "path to credentials json file",
 		},
 	},
 }
@@ -78,7 +83,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	var build int
 	if cmd.Bool(flagFetch) {
 		if cmd.Bool(flagFetchForRelease) {
-			latest, err := fetchLatestReleaseBuild()
+			secretsPath := cmd.String(flagCredentialsPath)
+			latest, err := fetchLatestReleaseBuild(secretsPath)
 			if err != nil {
 				return err
 			}
@@ -132,10 +138,10 @@ func writeFile(path string, lines []string) error {
 // latest build number from the Google Play Store for the specified app.
 // It parses the output and returns the build number as an integer.
 // Returns an error if the command fails or the output cannot be parsed.
-func fetchLatestReleaseBuild() (int64, error) {
+func fetchLatestReleaseBuild(path string) (int64, error) {
 	logger.Info("Fetching latest build from Play Store")
 
-	contents, err := os.ReadFile(".secrets/prod/GoogleApplicationCredentials-ulist.json")
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		return 0, err
 	}
