@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Constants
-INSTALL_DIR="$HOME/.local/share/ult"
+INSTALL_DIR="${ULT_PATH:-$HOME/.local/share/ult}"
 TMP_DIR=$(mktemp -d)
 
 # Cleanup function
