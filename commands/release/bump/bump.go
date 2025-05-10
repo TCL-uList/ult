@@ -80,7 +80,6 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 	logger.Info("Found version in pubspec", "version", version, "at line idx", idx)
 
-	var build int
 	if cmd.Bool(flagFetch) {
 		if cmd.Bool(flagFetchForRelease) {
 			secretsPath := cmd.String(flagCredentialsPath)
@@ -88,15 +87,15 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			if err != nil {
 				return err
 			}
-			build = int(latest)
+			version.Build = int(latest)
 		} else {
-			build, err = fetchLatestDevelopmentBuild()
+			version, err = fetchLatestDevelopmentVersion()
 			if err != nil {
 				return err
 			}
 		}
 	}
-	version.Build = build
+
 	version.Bump(bumpType)
 
 	// Update version in pubspec lines
@@ -153,16 +152,16 @@ func fetchLatestReleaseBuild(path string) (int64, error) {
 	return latest, nil
 }
 
-func fetchLatestDevelopmentBuild() (int, error) {
+func fetchLatestDevelopmentVersion() (*version.Version, error) {
 	db, err := cloudsql.ConnectWithConnector()
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	release, err := release.FetchLatestRelease(db)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
-	return release.Bump(), nil
+	return &release.Version, nil
 }
