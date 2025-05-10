@@ -10,6 +10,7 @@ import (
 	commit_command "ulist.app/ult/commands/commit"
 	"ulist.app/ult/commands/release"
 	"ulist.app/ult/commands/secrets"
+	tag_command "ulist.app/ult/commands/tag"
 )
 
 var (
@@ -38,6 +39,7 @@ func main() {
 			&release_command.Cmd,
 			&secrets_command.Cmd,
 			&commit_command.Cmd,
+			&tag_command.Cmd,
 			&versionCmd,
 		},
 		Flags: []cli.Flag{
