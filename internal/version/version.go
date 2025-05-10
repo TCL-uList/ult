@@ -9,20 +9,20 @@ import (
 
 // Version represents semantic versioning with build number
 type Version struct {
+	Year  int
 	Major int
 	Minor int
-	Patch int
 	Build int
 }
 
 // String returns formatted version string like "2010.200.01+04"
 func (v Version) String() string {
-	return fmt.Sprintf("%04d.%03d.%02d+%02d", v.Major, v.Minor, v.Patch, v.Build)
+	return fmt.Sprintf("%04d.%03d.%02d+%02d", v.Year, v.Major, v.Minor, v.Build)
 }
 
 // String returns formatted version string without the build part like "2010.200.01"
 func (v Version) StringNoBuild() string {
-	return fmt.Sprintf("%04d.%03d.%02d", v.Major, v.Minor, v.Patch)
+	return fmt.Sprintf("%04d.%03d.%02d", v.Year, v.Major, v.Minor)
 }
 
 // Parse parses a version line like "version: 10.20.03+04" into a Version struct.
@@ -60,9 +60,9 @@ func Parse(line string) (*Version, error) {
 	}
 
 	version := Version{
-		Major: major,
-		Minor: minor,
-		Patch: patch,
+		Year:  major,
+		Major: minor,
+		Minor: patch,
 		Build: build,
 	}
 
@@ -76,20 +76,25 @@ func (v *Version) Bump(bumpType BumpType) {
 	case BumpTypeBuild:
 		v.Build++
 
-	case BumpTypePatch:
-		v.Build = 1
-		v.Patch++
-
 	case BumpTypeMinor:
 		v.Build = 1
-		v.Patch = 1
 		v.Minor++
 
 	case BumpTypeMajor:
 		v.Build = 1
-		v.Patch = 1
-		v.Minor = v.Minor - (v.Minor % 100) + 100
+		v.Minor = 1
 		v.Major++
+
+	case BumpTypeMilestone:
+		v.Build = 1
+		v.Minor = 1
+		v.Major = v.Major - (v.Major % 100) + 100
+
+	case BumpTypeYear:
+		v.Build = 1
+		v.Minor = 1
+		v.Major = 100
+		v.Year++
 	}
 }
 

@@ -14,29 +14,29 @@ func TestBump(t *testing.T) {
 			name:  "bumping build",
 			input: BumpTypeBuild,
 			want: Version{
-				Major: 2000,
-				Minor: 200,
-				Patch: 2,
+				Year:  2000,
+				Major: 200,
+				Minor: 2,
 				Build: 3,
-			},
-		},
-		{
-			name:  "bumping patch",
-			input: BumpTypePatch,
-			want: Version{
-				Major: 2000,
-				Minor: 200,
-				Patch: 3,
-				Build: 1,
 			},
 		},
 		{
 			name:  "bumping minor",
 			input: BumpTypeMinor,
 			want: Version{
-				Major: 2000,
-				Minor: 201,
-				Patch: 1,
+				Year:  2000,
+				Major: 200,
+				Minor: 3,
+				Build: 1,
+			},
+		},
+		{
+			name:  "bumping milestone",
+			input: BumpTypeMilestone,
+			want: Version{
+				Year:  2000,
+				Major: 300,
+				Minor: 1,
 				Build: 1,
 			},
 		},
@@ -44,9 +44,19 @@ func TestBump(t *testing.T) {
 			name:  "bumping major",
 			input: BumpTypeMajor,
 			want: Version{
-				Major: 2001,
-				Minor: 300,
-				Patch: 1,
+				Year:  2000,
+				Major: 201,
+				Minor: 1,
+				Build: 1,
+			},
+		},
+		{
+			name:  "bumping year",
+			input: BumpTypeYear,
+			want: Version{
+				Year:  2001,
+				Major: 100,
+				Minor: 1,
 				Build: 1,
 			},
 		},
@@ -54,7 +64,7 @@ func TestBump(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			version := Version{Major: 2000, Minor: 200, Patch: 2, Build: 2}
+			version := Version{Year: 2000, Major: 200, Minor: 2, Build: 2}
 			version.Bump(tc.input)
 			if !versionsEqual(version, tc.want) {
 				t.Errorf("ParseVersion() = %+v, want %+v", version, tc.want)
@@ -74,9 +84,9 @@ func TestParse(t *testing.T) {
 			name:  "valid semver",
 			input: "1.2.3+456",
 			want: Version{
-				Major: 1,
-				Minor: 2,
-				Patch: 3,
+				Year:  1,
+				Major: 2,
+				Minor: 3,
 				Build: 456,
 			},
 		},
@@ -89,9 +99,9 @@ func TestParse(t *testing.T) {
 			name:  "with metadata",
 			input: "1.2.3+456",
 			want: Version{
-				Major: 1,
-				Minor: 2,
-				Patch: 3,
+				Year:  1,
+				Major: 2,
+				Minor: 3,
 				Build: 456,
 			},
 		},
@@ -99,9 +109,9 @@ func TestParse(t *testing.T) {
 			name:  "valid semver with prefix",
 			input: "version: 1.2.3+456",
 			want: Version{
-				Major: 1,
-				Minor: 2,
-				Patch: 3,
+				Year:  1,
+				Major: 2,
+				Minor: 3,
 				Build: 456,
 			},
 		},
@@ -109,9 +119,9 @@ func TestParse(t *testing.T) {
 			name:  "valid semver with postfix",
 			input: "1.2.3+456 postfix",
 			want: Version{
-				Major: 1,
-				Minor: 2,
-				Patch: 3,
+				Year:  1,
+				Major: 2,
+				Minor: 3,
 				Build: 456,
 			},
 		},
@@ -119,9 +129,9 @@ func TestParse(t *testing.T) {
 			name:  "valid semver with actual value",
 			input: "version: 2025.200.01+10",
 			want: Version{
-				Major: 2025,
-				Minor: 200,
-				Patch: 01,
+				Year:  2025,
+				Major: 200,
+				Minor: 01,
 				Build: 10,
 			},
 		},
@@ -174,7 +184,7 @@ func TestFetchFromLines(t *testing.T) {
 				"\n",
 				"version: 2000.200.02+02",
 			},
-			want:    &Version{Major: 2000, Minor: 200, Patch: 02, Build: 02},
+			want:    &Version{Year: 2000, Major: 200, Minor: 02, Build: 02},
 			wantIdx: 3,
 			wantErr: false,
 		},
@@ -186,7 +196,7 @@ func TestFetchFromLines(t *testing.T) {
 				"2000.200.02+02",
 				"\n",
 			},
-			want:    &Version{Major: 2000, Minor: 200, Patch: 02, Build: 02},
+			want:    &Version{Year: 2000, Major: 200, Minor: 02, Build: 02},
 			wantIdx: 2,
 			wantErr: false,
 		},
@@ -209,8 +219,8 @@ func TestFetchFromLines(t *testing.T) {
 }
 
 func versionsEqual(a, b Version) bool {
-	return a.Major == b.Major &&
+	return a.Year == b.Year &&
+		a.Major == b.Major &&
 		a.Minor == b.Minor &&
-		a.Patch == b.Patch &&
 		a.Build == b.Build
 }

@@ -8,34 +8,23 @@ import (
 type BumpType int
 
 const (
-	BumpTypeMajor BumpType = iota
+	BumpTypeYear BumpType = iota
+	BumpTypeMajor
+	BumpTypeMilestone
 	BumpTypeMinor
-	BumpTypePatch
 	BumpTypeBuild
 )
 
-var stringToBumpType = map[string]BumpType{
-	"bump":  BumpTypeMajor,
-	"minor": BumpTypeMinor,
-	"patch": BumpTypePatch,
-	"major": BumpTypeBuild,
-}
-
-var bumpTypeToString = map[BumpType]string{
-	BumpTypeMajor: "bump",
-	BumpTypeMinor: "minor",
-	BumpTypePatch: "patch",
-	BumpTypeBuild: "major",
-}
-
 func (b BumpType) String() string {
 	switch b {
+	case BumpTypeYear:
+		return "year"
+	case BumpTypeMilestone:
+		return "milestone"
 	case BumpTypeMajor:
 		return "major"
 	case BumpTypeMinor:
 		return "minor"
-	case BumpTypePatch:
-		return "patch"
 	case BumpTypeBuild:
 		return "build"
 	}
@@ -46,15 +35,17 @@ func (b BumpType) String() string {
 
 func ParseBumpType(s string) (BumpType, error) {
 	switch strings.ToLower(s) {
+	case "year":
+		return BumpTypeYear, nil
+	case "milestone":
+		return BumpTypeMilestone, nil
 	case "major":
 		return BumpTypeMajor, nil
 	case "minor":
 		return BumpTypeMinor, nil
-	case "patch":
-		return BumpTypePatch, nil
 	case "build":
 		return BumpTypeBuild, nil
 	}
 
-	return BumpTypeMajor, fmt.Errorf("invalid bump type: %s", s)
+	return BumpTypeYear, fmt.Errorf("invalid bump type: %s", s)
 }

@@ -84,7 +84,7 @@ func SaveVersion(db *sql.DB, version version.Version) (int, error) {
   `
 
 	var id int
-	err := db.QueryRow(query, version.Major, version.Minor, version.Patch).Scan(&id)
+	err := db.QueryRow(query, version.Year, version.Major, version.Minor).Scan(&id)
 	if err != nil {
 		return -1, fmt.Errorf("failed to create version in database: %w", err)
 	}
@@ -204,7 +204,7 @@ func FetchLatestRelease(db *sql.DB) (*Release, error) {
 		Commit:         commit,
 		Date:           dateTime,
 		IssueTrackerID: issueTrackerId,
-		Version:        version.Version{Major: year, Minor: major, Patch: minor, Build: bump},
+		Version:        version.Version{Year: year, Major: major, Minor: minor, Build: bump},
 	}
 	return release, nil
 }
