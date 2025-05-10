@@ -61,6 +61,15 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		"commit", commitMessage,
 	)
 
+	hasChanges, err := git.HasChanges(filePath)
+	if err != nil {
+		return err
+	}
+	if !hasChanges {
+		fmt.Println("\nThe given file has no changes. Skipping commit!")
+		return nil
+	}
+
 	appRepo, err := gitlab.NewClient(token)
 	if err != nil {
 		return err

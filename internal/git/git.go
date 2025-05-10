@@ -187,3 +187,12 @@ func GetIssueNumberFromBranch(branch string) (int64, error) {
 
 	return issue, nil
 }
+
+func HasChanges(filePath string) (bool, error) {
+	output, err := execCommand("git", "diff", filePath)
+	if err != nil {
+		return false, fmt.Errorf("getting diff for file (%s): %w", filePath, err)
+	}
+
+	return len(output) != 0, nil
+}
