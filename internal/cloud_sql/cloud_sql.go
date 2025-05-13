@@ -13,7 +13,7 @@ func ConnectWithConnector() (*sql.DB, error) {
 	var (
 		dbUser = os.Getenv("ULT_DB_USER")
 		dbPwd  = os.Getenv("ULT_DB_PASS")
-		dbName = "ep-bold-mud-ac6h4c01-pooler.sa-east-1.aws.neon.tech/neondb"
+		dbHost = os.Getenv("ULT_DB_HOST")
 	)
 
 	if len(dbUser) == 0 {
@@ -22,8 +22,11 @@ func ConnectWithConnector() (*sql.DB, error) {
 	if len(dbPwd) == 0 {
 		panic("ULT_DB_PASS variable must not be empty")
 	}
+	if len(dbHost) == 0 {
+		panic("ULT_DB_HOST variable must not be empty")
+	}
 
-	databaseURL := fmt.Sprintf("postgresql://%s:%s@%s?sslmode=require", dbUser, dbPwd, dbName)
+	databaseURL := fmt.Sprintf("postgresql://%s:%s@%s?sslmode=require", dbUser, dbPwd, dbHost)
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
