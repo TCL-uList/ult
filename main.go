@@ -7,9 +7,10 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v3"
+	backend_command "ulist.app/ult/commands/backend"
 	commit_command "ulist.app/ult/commands/commit"
-	"ulist.app/ult/commands/release"
-	"ulist.app/ult/commands/secrets"
+	release_command "ulist.app/ult/commands/release"
+	secrets_command "ulist.app/ult/commands/secrets"
 	tag_command "ulist.app/ult/commands/tag"
 )
 
@@ -30,18 +31,25 @@ func main() {
 		},
 	}
 
+	commands := []*cli.Command{
+		&release_command.Cmd,
+		&secrets_command.Cmd,
+		&commit_command.Cmd,
+		&tag_command.Cmd,
+		&versionCmd,
+	}
+
+	// only dev builds can access the backend command
+	if commit == "none" {
+		commands = append(commands, &backend_command.Cmd)
+	}
+
 	cmd := &cli.Command{
 		Name: "ult",
 		Usage: "uList Command Line Tools (ult)\n\n" +
 			"The official CLI for managing uList application versions and deployments.\n" +
 			"Automates version bumping, release tagging, and deployment workflows.",
-		Commands: []*cli.Command{
-			&release_command.Cmd,
-			&secrets_command.Cmd,
-			&commit_command.Cmd,
-			&tag_command.Cmd,
-			&versionCmd,
-		},
+		Commands: commands,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:    "verbose",

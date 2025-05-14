@@ -48,6 +48,7 @@ func GenerateTables(db *sql.DB) error {
 		name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE
 	);`
+	fmt.Printf("creating table 'assignees': %s\n\n", createAssigneesTableQuery)
 	_, err := db.Exec(createAssigneesTableQuery)
 	if err != nil {
 		return fmt.Errorf("failed to create assignees table: %w", err)
@@ -62,16 +63,20 @@ func GenerateTables(db *sql.DB) error {
 		minor INTEGER NOT NULL,
     UNIQUE (year, major, minor)
 	);`
+	fmt.Printf("creating table 'versions': %s\n\n", createVersionsTableQuery)
 	_, err = db.Exec(createVersionsTableQuery)
 	if err != nil {
 		return fmt.Errorf("failed to create versions table: %w", err)
 	}
-	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_versions_sort ON versions (year DESC, major DESC, minor DESC);`)
+
+	idx_versions_sort := `CREATE INDEX IF NOT EXISTS idx_versions_sort ON versions (year DESC, major DESC, minor DESC);`
+	fmt.Printf("creating index 'idx_versions_sort': %s\n\n", idx_versions_sort)
+	_, err = db.Exec(idx_versions_sort)
 	if err != nil {
 		return fmt.Errorf("failed to create index: %w", err)
 	}
 
-	createTableQuery := `
+	createTableReleasesQuery := `
 	CREATE TABLE IF NOT EXISTS releases (
 		branch TEXT NOT NULL,
 		assignee_id INTEGER NOT NULL,
@@ -85,11 +90,15 @@ func GenerateTables(db *sql.DB) error {
 		FOREIGN KEY (version_id) REFERENCES versions(id),
 		FOREIGN KEY (assignee_id) REFERENCES assignees(id)
 	);`
-	_, err = db.Exec(createTableQuery)
+	fmt.Printf("creating table 'releases': %s\n\n", createTableReleasesQuery)
+	_, err = db.Exec(createTableReleasesQuery)
 	if err != nil {
 		return fmt.Errorf("failed to create releases table: %w", err)
 	}
-	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_releases_bump ON releases(bump);`)
+
+	idx_releases_bump := `CREATE INDEX IF NOT EXISTS idx_releases_bump ON releases(bump);`
+	fmt.Printf("creating index 'idx_releases_bump': %s\n\n", idx_releases_bump)
+	_, err = db.Exec(idx_releases_bump)
 	if err != nil {
 		return fmt.Errorf("failed to create index: %w", err)
 	}
