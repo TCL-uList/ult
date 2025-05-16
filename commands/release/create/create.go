@@ -26,6 +26,7 @@ const (
 	flagBranch         = "branch"
 	flagVersion        = "version"
 	flagApi            = "api"
+	flagSkipDupes      = "skip-duplicates"
 )
 
 var (
@@ -63,6 +64,10 @@ var fromCommitCmd = cli.Command{
 			Usage:   "fetch information from gitlab api",
 			Aliases: []string{"a"},
 		},
+		&cli.BoolFlag{
+			Name:  flagSkipDupes,
+			Usage: "will not error out when trying to create an already existent release",
+		},
 	},
 }
 
@@ -89,6 +94,7 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 	branch := cmd.String(flagBranch)
 	issueTrackerID := cmd.Int(flagIssueTrackerID)
 	versionStr := cmd.String(flagVersion)
+	skipDuplicates := cmd.Bool(flagSkipDupes)
 	if len(versionStr) == 0 {
 		logger.Info("no version was passed as argument, will try to fetch from pubspec file")
 		contents, err := os.ReadFile("pubspec.yaml")
@@ -164,6 +170,10 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 
 	err = release.SaveRelease(db, releaseEn)
 	if err != nil {
+		if skipDuplicates && strings.Contains(err.Error(), "duplicate key value violates unique constraint \"releases_pkey\"") {
+			logger.Info("Release already exists. Skipping creation...")
+			return nil
+		}
 		return err
 	}
 
