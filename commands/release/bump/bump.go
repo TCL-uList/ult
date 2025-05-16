@@ -4,12 +4,14 @@ package bump
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/urfave/cli/v3"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
 	"ulist.app/ult/internal/playstore"
 	"ulist.app/ult/internal/release"
@@ -21,6 +23,9 @@ const (
 	flagFetch           = "fetch"
 	flagFetchForRelease = "play-store"
 	flagCredentialsPath = "credentials"
+	flagOnce            = "once"
+	flagTarget          = "target"
+	flagSource          = "source"
 )
 
 var (
@@ -45,6 +50,18 @@ var Cmd = cli.Command{
 			Name:  flagCredentialsPath,
 			Usage: "path to credentials json file",
 		},
+		&cli.BoolFlag{
+			Name:  flagOnce,
+			Usage: "will skip if previous bump is found in commit messages diff between source and target branches",
+		},
+		&cli.StringFlag{
+			Name:  flagSource,
+			Usage: "to/source commit SHA or branch name. required when using '--once'",
+		},
+		&cli.StringFlag{
+			Name:  flagTarget,
+			Usage: "from/target commit SHA or branch name. required when using '--once'",
+		},
 	},
 }
 
@@ -61,6 +78,40 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		logger.Error("Failed to parse bump type", "error", err)
 		return fmt.Errorf("parsing bump type: %w", err)
+	}
+
+	if cmd.Bool(flagOnce) {
+		target := cmd.String(flagTarget)
+		if len(target) == 0 {
+			return errors.New("when using '--once' flag a target branch name or commit sha must be provided '--target=target-name-in-remote'")
+		}
+
+		source := cmd.String(flagSource)
+		if len(source) == 0 {
+			return errors.New("when using '--once' flag a source branch name or commit sha must be provided '--source=source-name-in-remote'")
+		}
+
+		projectId := cmd.String("project-id")
+		if len(projectId) == 0 {
+			return errors.New("when using '--once' flag a projectId must be provided '--project-id=000000000'")
+		}
+
+		token := cmd.String("token")
+		if len(token) == 0 {
+			return errors.New("when using '--once' flag a token must be provided '--token=my-token'")
+		}
+
+		alreadyBumped, err := didAlreadyBumpGitlabAPI(target, source, projectId, token)
+		if err != nil {
+			return err
+		}
+
+		if alreadyBumped {
+			fmt.Println("Previous bump was found. Skipping a new one...")
+			return nil
+		}
+
+		fmt.Println("No previous bump was found. Creating a new one...")
 	}
 
 	contents, err := os.ReadFile(pubspecPath)
@@ -164,4 +215,33 @@ func fetchLatestDevelopmentVersion() (*version.Version, error) {
 	}
 
 	return &release.Version, nil
+}
+
+// Will search for bump commit in all commits there are on `source` but not on `target` (same as git log --oneline source --not target).
+func didAlreadyBumpGitlabAPI(target, source, projectId, token string) (bool, error) {
+	appRepo, err := gitlab.NewClient(token)
+	if err != nil {
+		return false, fmt.Errorf("Failed to create client: %v", err)
+	}
+
+	opt := &gitlab.CompareOptions{
+		From: gitlab.Ptr(target),
+		To:   gitlab.Ptr(source),
+	}
+	compare, _, err := appRepo.Repositories.Compare(projectId, opt)
+	if err != nil {
+		return false, fmt.Errorf("Error fetching commit diff from gitlab branches: %v", err)
+	}
+
+	for _, commit := range compare.Commits {
+		println(commit.Title)
+	}
+
+	for _, commit := range compare.Commits {
+		if strings.Contains(commit.Title, "bump version [skip ci]") {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
