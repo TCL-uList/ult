@@ -33,7 +33,7 @@ func Parse(line string) (*Version, error) {
 	if len(line) == 0 {
 		return nil, errors.New("Version line string cannot be empty")
 	}
-	re := regexp.MustCompile(`(\d+)\.(\d+)\.(\d+)\+(\d+)`)
+	re := regexp.MustCompile(`(\d\d\d\d)\.(\d\d+)\.(\d+)\+(\d+)`)
 	matches := re.FindStringSubmatch(line)
 	if matches == nil || len(matches) != 5 {
 		return nil, fmt.Errorf("Version string doesn't match expected format \"version: 2020.100.01+01\", got: %s", line)
