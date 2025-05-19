@@ -94,14 +94,12 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			return fmt.Errorf("no tag was found for the given commit hash (%s)", commitHash)
 		}
 
-		if strings.Contains(tag, "+") {
-			return fmt.Errorf("%s is an invalid QA version tag, it can't contain '+' sign", tag)
+		if !strings.Contains(tag, "+") {
+			return fmt.Errorf("%s is an invalid QA version tag, it should contain '+' sign", tag)
 		}
 
 		versionStr = strings.Replace(tag, "QA-v", "", 1)
 		versionStr = strings.TrimSpace(versionStr)
-		// add build part (+00) so version module can parse the string
-		versionStr = fmt.Sprintf("%s+00", versionStr)
 	}
 
 	newVersion, err := version.Parse(versionStr)
@@ -171,6 +169,9 @@ func tagFromGitlab(hash, token, projectId string) (string, error) {
 		Search: gitlab.Ptr("^QA-v"),
 	}
 	tags, _, err := appRepo.Tags.ListTags(projectId, &opt)
+	if err != nil {
+		return "", fmt.Errorf("fetching tag list from gitlab: %w", err)
+	}
 
 	for _, tag := range tags {
 		if !strings.Contains(tag.Commit.ID, hash) {
