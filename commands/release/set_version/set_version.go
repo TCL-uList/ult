@@ -2,6 +2,7 @@ package set_version
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,7 +34,11 @@ var Cmd = cli.Command{
 }
 
 func run(ctx context.Context, cmd *cli.Command) error {
-	newVersion, err := version.Parse(cmd.Args().First())
+	versionArg := cmd.Args().First()
+	if len(versionArg) == 0 {
+		return errors.New("you need to provide a version as positional argument (usage: ult release set-version 2000.100.10+01)")
+	}
+	newVersion, err := version.Parse(versionArg)
 	if err != nil {
 		return err
 	}
