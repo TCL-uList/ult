@@ -196,3 +196,12 @@ func HasChanges(filePath string) (bool, error) {
 
 	return len(output) != 0, nil
 }
+
+func GetTagFromCommit(hash string) (string, error) {
+	output, err := execCommand("git", "tag", "--points-at", hash)
+	if err != nil {
+		return "", fmt.Errorf("failed to get tag from given commit hash (%s): %w", hash, err)
+	}
+
+	return string(output), nil
+}

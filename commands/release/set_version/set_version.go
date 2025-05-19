@@ -2,18 +2,22 @@ package set_version
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/urfave/cli/v3"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"ulist.app/ult/internal/git"
 	"ulist.app/ult/internal/version"
 )
 
 const (
-	flagPath = "path"
+	flagPath    = "path"
+	flagFromTag = "from-tag"
+	flagApi     = "api"
+	flagHash    = "hash"
 )
 
 var (
@@ -30,28 +34,80 @@ var Cmd = cli.Command{
 			Name:  flagPath,
 			Usage: "path of the pubspec.yaml file",
 		},
+		&cli.BoolFlag{
+			Name:  flagFromTag,
+			Usage: "whether to use the current commit tag as version",
+		},
+		&cli.BoolFlag{
+			Name:  flagApi,
+			Usage: "whether to use the gitlab api to fetch the tag. defaults to false (git cli)",
+		},
+		&cli.StringFlag{
+			Name:  flagHash,
+			Usage: "commit hash from which to fetch the tag (used with --from-tag)",
+		},
 	},
 }
 
 func run(ctx context.Context, cmd *cli.Command) error {
-	versionArg := cmd.Args().First()
-	if len(versionArg) == 0 {
-		return errors.New("you need to provide a version as positional argument (usage: ult release set-version 2000.100.10+01)")
+	token := cmd.String("token")
+	projectId := cmd.String("project-id")
+	versionStr := cmd.Args().First()
+	useTagAsVersion := cmd.Bool(flagFromTag)
+	fetchTagFromGitlab := cmd.Bool(flagApi)
+	commitHash := cmd.String(flagHash)
+	if len(commitHash) == 0 {
+		commitHash = "HEAD"
 	}
-	newVersion, err := version.Parse(versionArg)
-	if err != nil {
-		return err
-	}
-
 	pubspecPath := cmd.String(flagPath)
 	if len(pubspecPath) == 0 {
 		pubspecPath = "pubspec.yaml"
 	}
 
 	logger.Debug("Starting set version command",
-		"version", newVersion,
+		"version", versionStr,
+		"use_tag", useTagAsVersion,
 		"path", pubspecPath,
+		"hash", commitHash,
 	)
+
+	if len(versionStr) == 0 {
+		if !useTagAsVersion {
+			return fmt.Errorf("you need to provide version as positional argument (usage: ult release set-version 2000.100.10+01) or use --%s\n", flagFromTag)
+		}
+
+		var tag string
+		var err error
+		if fetchTagFromGitlab {
+			tag, err = tagFromGitlab(commitHash, token, projectId)
+			if err != nil {
+				return err
+			}
+		} else {
+			tag, err = tagFromGit(commitHash)
+			if err != nil {
+				return err
+			}
+		}
+
+		if len(tag) == 0 {
+			return fmt.Errorf("no tag was found for the given commit hash (%s)", commitHash)
+		}
+
+		if strings.Contains(tag, "+") {
+			return fmt.Errorf("%s is an invalid QA version tag, it can't contain '+' sign", tag)
+		}
+
+		versionStr = strings.Replace(tag, "QA-v", "", 1)
+		versionStr = strings.TrimSpace(versionStr)
+		// add build part (+00) so version module can parse the string
+		versionStr = fmt.Sprintf("%s+00", versionStr)
+	}
+
+	newVersion, err := version.Parse(versionStr)
+	if err != nil {
+		return err
+	}
 
 	contents, err := os.ReadFile(pubspecPath)
 	if err != nil {
@@ -93,4 +149,36 @@ func writeFile(path string, lines []string) error {
 	}
 
 	return nil
+}
+
+func tagFromGit(hash string) (string, error) {
+	tag, err := git.GetTagFromCommit(hash)
+	if err != nil {
+		return tag, err
+	}
+
+	return tag, nil
+}
+
+func tagFromGitlab(hash, token, projectId string) (string, error) {
+	var tag string
+
+	appRepo, err := gitlab.NewClient(token)
+	if err != nil {
+		return tag, err
+	}
+	opt := gitlab.ListTagsOptions{
+		Search: gitlab.Ptr("^QA-v"),
+	}
+	tags, _, err := appRepo.Tags.ListTags(projectId, &opt)
+
+	for _, tag := range tags {
+		if !strings.Contains(tag.Commit.ID, hash) {
+			continue
+		}
+
+		return tag.Name, nil
+	}
+
+	return tag, nil
 }
