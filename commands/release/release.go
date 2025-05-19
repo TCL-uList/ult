@@ -7,6 +7,7 @@ import (
 	"ulist.app/ult/commands/release/bump"
 	"ulist.app/ult/commands/release/create"
 	"ulist.app/ult/commands/release/deploy"
+	"ulist.app/ult/commands/release/set_version"
 )
 
 const (
@@ -20,5 +21,6 @@ var Cmd = cli.Command{
 		&bump.Cmd,
 		&create.Cmd,
 		&deploy.Cmd,
+		&set_version.Cmd,
 	},
 }
