@@ -87,7 +87,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("reading json key file: %w", err)
 	}
 
-	buildFile, err := os.Open("build.apk")
+	buildFile, err := os.Open(buildFilePath)
 	if err != nil {
 		return err
 	}
