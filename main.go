@@ -12,6 +12,7 @@ import (
 	release_command "ulist.app/ult/commands/release"
 	secrets_command "ulist.app/ult/commands/secrets"
 	tag_command "ulist.app/ult/commands/tag"
+	"ulist.app/ult/internal/core"
 )
 
 var (
@@ -52,16 +53,16 @@ func main() {
 		Commands: commands,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:    "verbose",
+				Name:    core.VerboseFlag,
 				Aliases: []string{"v"},
 				Usage:   "show logging messages",
 			},
 			&cli.StringFlag{
-				Name:  "token",
+				Name:  core.TokenFlag,
 				Usage: "token that will be used on http requests",
 			},
 			&cli.StringFlag{
-				Name:    "project-id",
+				Name:    core.ProjectIDFlag,
 				Aliases: []string{"id"},
 				Usage:   "The ID or URL-encoded path of the project",
 			},

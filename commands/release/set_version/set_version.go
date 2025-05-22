@@ -9,6 +9,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/git"
 	"ulist.app/ult/internal/version"
 )
@@ -50,8 +51,6 @@ var Cmd = cli.Command{
 }
 
 func run(ctx context.Context, cmd *cli.Command) error {
-	token := cmd.String("token")
-	projectId := cmd.String("project-id")
 	versionStr := cmd.Args().First()
 	useTagAsVersion := cmd.Bool(flagFromTag)
 	fetchTagFromGitlab := cmd.Bool(flagApi)
@@ -70,6 +69,15 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		"path", pubspecPath,
 		"hash", commitHash,
 	)
+
+	token, err := core.GetToken(cmd)
+	if err != nil {
+		return err
+	}
+	projectId, err := core.GetProjectID(cmd)
+	if err != nil {
+		return err
+	}
 
 	if len(versionStr) == 0 {
 		if !useTagAsVersion {

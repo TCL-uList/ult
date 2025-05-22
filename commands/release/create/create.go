@@ -13,6 +13,7 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"ulist.app/ult/internal/assignee"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
+	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/git"
 	"ulist.app/ult/internal/release"
 	"ulist.app/ult/internal/utils"
@@ -114,11 +115,12 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 
 	var commit *git.Commit
 	if api {
-		projectId, err := utils.GetOrError("project-id", cmd)
+		token, err := core.GetToken(cmd)
 		if err != nil {
 			return err
 		}
-		token, err := utils.GetOrError("token", cmd)
+
+		projectId, err := core.GetProjectID(cmd)
 		if err != nil {
 			return err
 		}

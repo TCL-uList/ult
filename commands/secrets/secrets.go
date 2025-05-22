@@ -2,7 +2,6 @@ package secrets_command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/urfave/cli/v3"
+	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/secrets"
 )
 
@@ -101,17 +101,9 @@ func setLoggingVerbosity(verbose bool) {
 	}
 }
 
-func getToken(cmd *cli.Command) (string, error) {
-	token := cmd.String("token")
-	if len(token) == 0 {
-		return "", errors.New("No token found. You need to pass the token using: --token=yourtokenhere")
-	}
-	return token, nil
-}
-
 func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
 	setLoggingVerbosity(cmd.Bool(flagVerbose))
-	token, err := getToken(cmd)
+	token, err := core.GetToken(cmd)
 	if err != nil {
 		return err
 	}
@@ -134,7 +126,7 @@ func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
 
 func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 	setLoggingVerbosity(cmd.Bool(flagVerbose))
-	token, err := getToken(cmd)
+	token, err := core.GetToken(cmd)
 	if err != nil {
 		return err
 	}
@@ -163,7 +155,7 @@ func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 
 func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 	setLoggingVerbosity(cmd.Bool(flagVerbose))
-	token, err := getToken(cmd)
+	token, err := core.GetToken(cmd)
 	if err != nil {
 		return err
 	}

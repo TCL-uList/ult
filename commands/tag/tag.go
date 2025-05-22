@@ -9,13 +9,13 @@ import (
 
 	"github.com/urfave/cli/v3"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/version"
 )
 
 const (
 	flagRef        = "ref"
 	flagUseVersion = "use-pubspec-version"
-	flagProjectId  = "id"
 )
 
 var (
@@ -37,16 +37,15 @@ var Cmd = cli.Command{
 			Usage: "use version from pubspec file as tag name",
 			Value: false,
 		},
-		&cli.StringFlag{
-			Name:  flagProjectId,
-			Usage: "the ID or URL-encoded path of the project",
-		},
 	},
 }
 
 func run(ctx context.Context, cmd *cli.Command) error {
-	token := cmd.String("token")
-	projectId := cmd.String(flagProjectId)
+	token, err := core.GetToken(cmd)
+	if err != nil {
+		return err
+	}
+	projectId, projectIdErr := core.GetProjectID(cmd)
 	ref := cmd.String(flagRef)
 	tagName := cmd.Args().First()
 	useVersionAsTagName := cmd.Bool(flagUseVersion)
@@ -59,6 +58,10 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		"use_pubspec_version", useVersionAsTagName,
 		"project", projectId,
 	)
+
+	if projectIdErr != nil {
+		return err
+	}
 
 	if useVersionAsTagName {
 		version, err := fetchVersionFromPubspecFile()

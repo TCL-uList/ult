@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v3"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	cloudsql "ulist.app/ult/internal/cloud_sql"
+	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/playstore"
 	"ulist.app/ult/internal/release"
 	"ulist.app/ult/internal/version"
@@ -91,14 +92,13 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			return errors.New("when using '--once' flag a source branch name or commit sha must be provided '--source=source-name-in-remote'")
 		}
 
-		projectId := cmd.String("project-id")
-		if len(projectId) == 0 {
-			return errors.New("when using '--once' flag a projectId must be provided '--project-id=000000000'")
-		}
-
-		token := cmd.String("token")
-		if len(token) == 0 {
+		token, err := core.GetToken(cmd)
+		if err != nil {
 			return errors.New("when using '--once' flag a token must be provided '--token=my-token'")
+		}
+		projectId, err := core.GetProjectID(cmd)
+		if err != nil {
+			return errors.New("when using '--once' flag a projectId must be provided '--project-id=000000000'")
 		}
 
 		alreadyBumped, err := didAlreadyBumpGitlabAPI(target, source, projectId, token)

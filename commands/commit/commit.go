@@ -8,6 +8,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
+	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/git"
 )
 
@@ -41,8 +42,14 @@ var Cmd = cli.Command{
 }
 
 func run(ctx context.Context, cmd *cli.Command) error {
-	token := cmd.String("token")
-	projectId := cmd.String(flagProjectId)
+	token, err := core.GetToken(cmd)
+	if err != nil {
+		return err
+	}
+	projectId, err := core.GetProjectID(cmd)
+	if err != nil {
+		return err
+	}
 	filePath := cmd.Args().First()
 	commitMessage := cmd.String(flagMessage)
 	branch := cmd.String(flagBranch)
