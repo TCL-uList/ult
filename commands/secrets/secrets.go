@@ -18,7 +18,6 @@ const (
 	flagId       = "id"
 	flagFileName = "name"
 	flagArchive  = "archive"
-	flagVerbose  = "verbose"
 )
 
 const (
@@ -31,9 +30,8 @@ const (
 )
 
 var (
-	isVerbose = false
-	lvl       = new(slog.LevelVar)
-	logger    = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+	lvl    = new(slog.LevelVar)
+	logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: lvl,
 	})).WithGroup("secrets_command")
 )
@@ -102,7 +100,7 @@ func setLoggingVerbosity(verbose bool) {
 }
 
 func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
-	setLoggingVerbosity(cmd.Bool(flagVerbose))
+	setLoggingVerbosity(cmd.Bool(core.VerboseFlag))
 	token, err := core.GetToken(cmd)
 	if err != nil {
 		return err
@@ -125,7 +123,7 @@ func listSecureFilesCommand(ctx context.Context, cmd *cli.Command) error {
 }
 
 func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
-	setLoggingVerbosity(cmd.Bool(flagVerbose))
+	setLoggingVerbosity(cmd.Bool(core.VerboseFlag))
 	token, err := core.GetToken(cmd)
 	if err != nil {
 		return err
@@ -154,7 +152,7 @@ func deleteSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 }
 
 func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
-	setLoggingVerbosity(cmd.Bool(flagVerbose))
+	setLoggingVerbosity(cmd.Bool(core.VerboseFlag))
 	token, err := core.GetToken(cmd)
 	if err != nil {
 		return err
