@@ -16,7 +16,6 @@ import (
 	"ulist.app/ult/internal/core"
 	"ulist.app/ult/internal/git"
 	"ulist.app/ult/internal/release"
-	"ulist.app/ult/internal/utils"
 	"ulist.app/ult/internal/version"
 )
 
