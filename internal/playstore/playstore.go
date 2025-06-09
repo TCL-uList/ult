@@ -43,14 +43,14 @@ func GetVersionFromLatestRelease(credFile []byte, packageName string) (int64, er
 		return latestCode, err
 	}
 
-	logger.Info("fetching tracks releases")
-	apksReq := service.Edits.Tracks.Get(packageName, edit.Id, "production")
-	resp, err := apksReq.Do()
+	logger.Info("fetching releases from production track")
+	prodReq := service.Edits.Tracks.Get(packageName, edit.Id, "production")
+	prodResp, err := prodReq.Do()
 	if err != nil {
 		return latestCode, err
 	}
 
-	for _, release := range resp.Releases {
+	for _, release := range prodResp.Releases {
 		for _, code := range release.VersionCodes {
 			if code <= latestCode {
 				continue
@@ -58,6 +58,23 @@ func GetVersionFromLatestRelease(credFile []byte, packageName string) (int64, er
 			latestCode = code
 		}
 	}
+
+	logger.Info("fetching releases from internal testing track")
+	internalReq := service.Edits.Tracks.Get(packageName, edit.Id, "internal")
+	internalResp, err := internalReq.Do()
+	if err != nil {
+		return latestCode, err
+	}
+
+	for _, release := range internalResp.Releases {
+		for _, code := range release.VersionCodes {
+			if code <= latestCode {
+				continue
+			}
+			latestCode = code
+		}
+	}
+
 	logger.Info("finished checking releases version code",
 		"latestVersionCode", latestCode)
 
