@@ -116,29 +116,29 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 	if api {
 		token, err := core.GetToken(cmd)
 		if err != nil {
-			return err
+			return fmt.Errorf("fetching environmental variable (project-id): %w", err)
 		}
 
 		projectId, err := core.GetProjectID(cmd)
 		if err != nil {
-			return err
+			return fmt.Errorf("fetching environmental variable (token): %w", err)
 		}
 
 		repo, err := gitlab.NewClient(token)
 		if err != nil {
-			return err
+			return fmt.Errorf("initializing gitlab http client: %w", err)
 		}
 
 		if issueTrackerID == 0 {
 			issueTrackerID, err = git.GetIssueNumberFromBranch(branch)
 			if err != nil {
-				return err
+				return fmt.Errorf("parsing issue number from branch: %w", err)
 			}
 		}
 
 		gitlabCommit, _, err := repo.Commits.GetCommit(projectId, hash, &gitlab.GetCommitOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("fetching commits from gitlab projectId (%v): %w", projectId, err)
 		}
 
 		commit = &git.Commit{
@@ -150,7 +150,7 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 	} else {
 		commit, err = getCommitFromGitCommand(hash)
 		if err != nil {
-			return err
+			return fmt.Errorf("fetching commit from local git repo: %w", err)
 		}
 	}
 
@@ -175,7 +175,7 @@ func runFromCommit(ctx context.Context, cmd *cli.Command) error {
 			logger.Info("Release already exists. Skipping creation...")
 			return nil
 		}
-		return err
+		return fmt.Errorf("not able to save release in database: %w", err)
 	}
 
 	logger.Info("Created release successfully")

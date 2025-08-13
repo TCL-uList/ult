@@ -122,7 +122,7 @@ func GetLatestCommitInfo() (*Commit, error) {
 
 	output, err := execCommand("git", "log", "-1")
 	if err != nil {
-		return nil, fmt.Errorf("getting commit info: %w", err)
+		return nil, fmt.Errorf("getting latest commit info: %w", err)
 	}
 
 	return getCommitInfoFromStdout(string(output))
