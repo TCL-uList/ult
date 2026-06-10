@@ -135,6 +135,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+	logger.Debug("RELEASE TEST", "create time", release.CreateTime, "build version", release.BuildVersion, "binary uri", release.BinaryDownloadUri)
 
 	if len(notes) > 0 {
 		err := appdistribution.AddReleaseNotesToRelease(release.Name, notes, service)
