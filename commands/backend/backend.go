@@ -7,7 +7,7 @@ import (
 
 var Cmd = cli.Command{
 	Name:  "backend",
-	Usage: "backend utils",
+	Usage: "backend infrastructure utilities (dev only)",
 	Commands: []*cli.Command{
 		&setup.Cmd,
 	},

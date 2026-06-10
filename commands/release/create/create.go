@@ -35,38 +35,38 @@ var (
 
 var fromCommitCmd = cli.Command{
 	Name:   "from-commit",
-	Usage:  "create a release from a commit sha256 hash",
+	Usage:  "create a release record from a commit SHA",
 	Action: runFromCommit,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:    flagLatest,
-			Usage:   "use the latest commit in current repository",
+			Usage:   "use the latest commit in the current repository instead of a positional SHA",
 			Aliases: []string{"l"},
 		},
 		&cli.StringFlag{
 			Name:     flagBranch,
-			Usage:    "name of the branch that generated this release (required)",
+			Usage:    "branch that produced this release",
 			Aliases:  []string{"b"},
 			Required: true,
 		},
 		&cli.IntFlag{
 			Name:    flagIssueTrackerID,
-			Usage:   "issue tracker id related with this release. if ommited will try to get from branch name",
+			Usage:   "issue tracker ID for this release (if omitted, parsed from branch name)",
 			Aliases: []string{"i"},
 		},
 		&cli.StringFlag{
 			Name:    flagVersion,
-			Usage:   "the version of this release (if ommited, will try to fetch from pubspec.yaml file)",
+			Usage:   "version string for this release (if omitted, read from pubspec.yaml)",
 			Aliases: []string{"v"},
 		},
 		&cli.BoolFlag{
 			Name:    flagApi,
-			Usage:   "fetch information from gitlab api",
+			Usage:   "fetch commit metadata from the GitLab API instead of local git",
 			Aliases: []string{"a"},
 		},
 		&cli.BoolFlag{
 			Name:  flagSkipDupes,
-			Usage: "will not error out when trying to create an already existent release",
+			Usage: "silently skip instead of erroring when a release with this commit already exists",
 		},
 	},
 }

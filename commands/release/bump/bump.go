@@ -36,32 +36,32 @@ var (
 // Cmd defines the version command for CLI
 var Cmd = cli.Command{
 	Name:   "bump",
-	Usage:  "increment the version in pubspec choosing one of: build, patch, minor or major",
+	Usage:  "increment the version in pubspec.yaml (build, patch, minor, or major)",
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  flagFetch,
-			Usage: "fetch latest build number from external server before incrementing. Skiping this flag will use the local pubspec.yaml version build number",
+			Usage: "fetch the latest build number from an external server before incrementing (defaults to local pubspec.yaml value)",
 		},
 		&cli.BoolFlag{
 			Name:  flagFetchForRelease,
-			Usage: "use play store server to fetch",
+			Usage: "fetch the build number from Google Play Store (requires --credentials; implies --fetch)",
 		},
 		&cli.StringFlag{
 			Name:  flagCredentialsPath,
-			Usage: "path to credentials json file",
+			Usage: "path to the Google Play Store service account credentials JSON file",
 		},
 		&cli.BoolFlag{
 			Name:  flagOnce,
-			Usage: "will skip if previous bump is found in commit messages diff between source and target branches",
+			Usage: "skip bump if a previous bump commit already exists between --target and --source",
 		},
 		&cli.StringFlag{
 			Name:  flagSource,
-			Usage: "to/source commit SHA or branch name. required when using '--once'",
+			Usage: "source branch name or commit SHA (the newer end of the range; required with --once)",
 		},
 		&cli.StringFlag{
 			Name:  flagTarget,
-			Usage: "from/target commit SHA or branch name. required when using '--once'",
+			Usage: "target branch name or commit SHA (the older end of the range; required with --once)",
 		},
 	},
 }

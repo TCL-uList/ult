@@ -33,27 +33,27 @@ var (
 
 var Cmd = cli.Command{
 	Name:   "deploy",
-	Usage:  "upload a release binary and optionally distribute it to testers",
+	Usage:  "upload a build to Firebase App Distribution and distribute it to tester groups",
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     flagAppId,
-			Usage:    "the app id of your Firebase app",
+			Usage:    "Firebase app ID (format: 1:project_number:platform:hash)",
 			Required: true,
 		},
 		&cli.StringSliceFlag{
 			Name:     flagGroups,
-			Usage:    "a comma-separated list of group aliases to distribute to",
+			Usage:    "tester group aliases to distribute the release to",
 			Required: true,
 		},
 		&cli.StringFlag{
 			Name:     flagJsonKey,
-			Usage:    "path to json key",
+			Usage:    "path to the Firebase service account credentials JSON file",
 			Required: true,
 		},
 		&cli.StringFlag{
 			Name:  flagReleaseNotes,
-			Usage: "release notes to include",
+			Usage: "release notes shown to testers",
 		},
 	},
 }

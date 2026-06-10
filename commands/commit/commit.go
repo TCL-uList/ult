@@ -25,13 +25,13 @@ var (
 
 var Cmd = cli.Command{
 	Name:   "commit",
-	Usage:  "commit files to the repo",
+	Usage:  "commit a file change to the repository via the GitLab API",
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    flagBranch,
 			Aliases: []string{"b"},
-			Usage:   "name of the branch to commit into",
+			Usage:   "branch to commit into (defaults to the current local branch)",
 		},
 		&cli.StringFlag{
 			Name:    flagMessage,

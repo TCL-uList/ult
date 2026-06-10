@@ -38,7 +38,7 @@ var (
 
 var Cmd = cli.Command{
 	Name:   "secrets",
-	Usage:  "increment the app version number",
+	Usage:  "manage secure files stored in the GitLab project (list, delete, update)",
 	Action: listSecureFilesCommand,
 	Commands: []*cli.Command{
 		{
@@ -49,41 +49,41 @@ var Cmd = cli.Command{
 				&cli.BoolFlag{
 					Name:    flagId,
 					Aliases: []string{"i"},
-					Usage:   "show only the id of files that were founded",
+					Usage:   "print only the numeric ID of each matching file",
 				},
 				&cli.StringFlag{
 					Name:        flagFileName,
-					Usage:       "show only files with given name",
+					Usage:       "filter results to files matching this name",
 					DefaultText: ".secrets.tar.gz",
 				},
 			},
 		},
 		{
 			Name:   "delete",
-			Usage:  "delete secrets from project repo",
+			Usage:  "delete a secure file from the project",
 			Action: deleteSecureFileCommand,
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:    flagId,
 					Aliases: []string{"i"},
-					Usage:   "show only the id of files that were founded",
+					Usage:   "print only the numeric ID of each matching file",
 				},
 				&cli.StringFlag{
 					Name:        flagFileName,
-					Usage:       "show only files with given name",
+					Usage:       "name of the secure file to delete",
 					DefaultText: ".secrets.tar.gz",
 				},
 			},
 		},
 		{
 			Name:   "update",
-			Usage:  "update secrets from project repo",
+			Usage:  "replace the existing secrets archive with a new one",
 			Action: updateSecureFileCommand,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        flagArchive,
 					Aliases:     []string{"a"},
-					Usage:       "path to the 'tar.gz' secrets archive that will be uploaded",
+					Usage:       "path to the .secrets.tar.gz archive to upload",
 					HideDefault: true,
 				},
 			},

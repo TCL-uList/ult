@@ -25,27 +25,26 @@ var (
 	logger = slog.Default().WithGroup("set_version_command")
 )
 
-// Cmd defines the version command for CLI
 var Cmd = cli.Command{
 	Name:   "set-version",
-	Usage:  "set a specific version in pubspec file",
+	Usage:  "write a specific version string into pubspec.yaml",
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  flagPath,
-			Usage: "path of the pubspec.yaml file",
+			Usage: "path to the pubspec.yaml file",
 		},
 		&cli.BoolFlag{
 			Name:  flagFromTag,
-			Usage: "whether to use the current commit tag as version",
+			Usage: "derive the version from the git tag on the target commit instead of a positional argument",
 		},
 		&cli.BoolFlag{
 			Name:  flagApi,
-			Usage: "whether to use the gitlab api to fetch the tag. defaults to false (git cli)",
+			Usage: "fetch the tag via the GitLab API (requires --token and --project-id; default uses local git)",
 		},
 		&cli.StringFlag{
 			Name:  flagHash,
-			Usage: "commit hash from which to fetch the tag (used with --from-tag)",
+			Usage: "commit hash to look up the tag for (used with --from-tag; defaults to HEAD)",
 		},
 	},
 }

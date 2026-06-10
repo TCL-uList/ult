@@ -24,17 +24,17 @@ var (
 
 var Cmd = cli.Command{
 	Name:   "tag",
-	Usage:  "creates a new tag in the repository that points to the supplied ref",
+	Usage:  "create a new git tag pointing to a commit, branch, or another tag",
 	Action: run,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    flagRef,
 			Aliases: []string{"r"},
-			Usage:   "a commit SHA, another tag name, or branch name to tag",
+			Usage:   "commit SHA, branch name, or existing tag to point the new tag at",
 		},
 		&cli.BoolFlag{
 			Name:  flagUseVersion,
-			Usage: "use version from pubspec file as tag name",
+			Usage: "use the version from pubspec.yaml as the tag name",
 			Value: false,
 		},
 	},

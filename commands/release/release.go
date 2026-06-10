@@ -16,7 +16,7 @@ const (
 
 var Cmd = cli.Command{
 	Name:  "release",
-	Usage: "increment the app version number",
+	Usage: "manage app releases: bump version, create release records, and deploy builds",
 	Commands: []*cli.Command{
 		&bump.Cmd,
 		&create.Cmd,
