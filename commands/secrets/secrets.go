@@ -189,17 +189,18 @@ func updateSecureFileCommand(ctx context.Context, cmd *cli.Command) error {
 
 	logger.Info("Looking for secure file", "name", defaultSecretsFileName)
 	foundFile, file := secrets.GetSecureFile(files, defaultSecretsFileName)
-	if !foundFile {
-		return fmt.Errorf("No secure file was found with given name: %s", path)
-	}
-	logger.Info("Found secure file", "id", file.ID, "name", defaultSecretsFileName)
+	if foundFile {
+		logger.Info("Found secure file", "id", file.ID, "name", defaultSecretsFileName)
 
-	logger.Info("Deleting existing secure file", "id", file.ID)
-	err = secrets.Delete(appRepo, file.ID, path, projectId)
-	if err != nil {
-		return err
+		logger.Info("Deleting existing secure file", "id", file.ID)
+		err = secrets.Delete(appRepo, file.ID, path, projectId)
+		if err != nil {
+			return err
+		}
+		logger.Info("Successfully deleted secure file", "id", file.ID)
+	} else {
+		logger.Info("No existing secure file found, creating a new one", "name", defaultSecretsFileName)
 	}
-	logger.Info("Successfully deleted secure file", "id", file.ID)
 
 	logger.Info("Creating new secure file", "project_id", projectId)
 	err = secrets.Create(appRepo, path, projectId)
